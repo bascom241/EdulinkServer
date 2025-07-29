@@ -1,32 +1,18 @@
-package com.Edulink.EdulinkServer.model;
+package com.Edulink.EdulinkServer.dto.user;
 
 import com.Edulink.EdulinkServer.enums.TeachingLevel;
-import jakarta.persistence.*;
 
-@Table(name = "users")
-@Entity
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class UserResponseDTO {
     private Long userId;
 
-    // Identity of the user to proceed with sign up algorithm
     private boolean student;
     private boolean teacher;
-
-    // User Security Details
-    @Column(unique = true, nullable = false)
     private String email;
-    private String password;
-    private String confirmPassword;
     private String role;
-
-    // User Personal details
     private String firstName;
     private String lastName;
     private String phoneNumber;
 
-    // User Professional details
     private String[] teachingSubjects;
     private TeachingLevel teachingLevel;
     private String shortBio;
@@ -61,22 +47,6 @@ public class User {
         this.teacher = teacher;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public String getRole() {
         return role;
     }
@@ -85,12 +55,12 @@ public class User {
         this.role = role;
     }
 
-    public String getConfirmPassword() {
-        return confirmPassword;
+    public String getEmail() {
+        return email;
     }
 
-    public void setConfirmPassword(String confirmPassword) {
-        this.confirmPassword = confirmPassword;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getFirstName() {
@@ -173,19 +143,19 @@ public class User {
         this.socialLink = socialLink;
     }
 
-    public String getBankName() {
-        return bankName;
-    }
-
-    public void setBankName(String bankName) {
-        this.bankName = bankName;
-    }
-
     public String getBankAccount() {
         return bankAccount;
     }
 
     public void setBankAccount(String bankAccount) {
         this.bankAccount = bankAccount;
+    }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
     }
 }

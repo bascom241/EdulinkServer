@@ -1,32 +1,24 @@
-package com.Edulink.EdulinkServer.model;
+package com.Edulink.EdulinkServer.dto.user;
 
 import com.Edulink.EdulinkServer.enums.TeachingLevel;
-import jakarta.persistence.*;
 
-@Table(name = "users")
-@Entity
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
-
-    // Identity of the user to proceed with sign up algorithm
+public class UserRequestDTO{
+    // Identity
     private boolean student;
     private boolean teacher;
 
-    // User Security Details
-    @Column(unique = true, nullable = false)
+    // Security
     private String email;
     private String password;
     private String confirmPassword;
     private String role;
 
-    // User Personal details
+    // Personal
     private String firstName;
     private String lastName;
     private String phoneNumber;
 
-    // User Professional details
+    // Professional
     private String[] teachingSubjects;
     private TeachingLevel teachingLevel;
     private String shortBio;
@@ -36,14 +28,6 @@ public class User {
     private String socialLink;
     private String bankAccount;
     private String bankName;
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
 
     public boolean isStudent() {
         return student;
@@ -77,20 +61,20 @@ public class User {
         this.password = password;
     }
 
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
     public String getConfirmPassword() {
         return confirmPassword;
     }
 
     public void setConfirmPassword(String confirmPassword) {
         this.confirmPassword = confirmPassword;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public String getFirstName() {
@@ -173,19 +157,19 @@ public class User {
         this.socialLink = socialLink;
     }
 
-    public String getBankName() {
-        return bankName;
-    }
-
-    public void setBankName(String bankName) {
-        this.bankName = bankName;
-    }
-
     public String getBankAccount() {
         return bankAccount;
     }
 
     public void setBankAccount(String bankAccount) {
         this.bankAccount = bankAccount;
+    }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
     }
 }
