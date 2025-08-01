@@ -28,8 +28,8 @@ public class MyUserDetailService implements UserDetailsService {
 
     @Autowired
     private UserResponseDTO userResponseDTO;
-    @Autowired
-    private User user;
+
+
 
 
     @Override
@@ -54,6 +54,9 @@ public UserResponseDTO registerUser(UserRequestDTO userRequestDTO, MultipartFile
         String certificateUrl = (String) certificateUploadResult.get("secure_url");
         String governmentIdUrl = (String) governmentIdUploadResult.get("secure_url");
 
+        User user = new User();
+
+        user.setEmail(userRequestDTO.getEmail());
         user.setPassword(bCryptPasswordEncoder.encode(userRequestDTO.getPassword()));
         user.setConfirmPassword(bCryptPasswordEncoder.encode(userRequestDTO.getConfirmPassword()));
 

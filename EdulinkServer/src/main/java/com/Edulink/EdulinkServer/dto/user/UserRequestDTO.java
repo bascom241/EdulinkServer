@@ -1,7 +1,9 @@
 package com.Edulink.EdulinkServer.dto.user;
 
 import com.Edulink.EdulinkServer.enums.TeachingLevel;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserRequestDTO{
     // Identity
     private boolean student;

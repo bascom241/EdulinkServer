@@ -30,7 +30,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String email = null;
         String token = null;
 
-        if(authHeader != null & authHeader.startsWith("Bearer ")){
+        if(authHeader != null && authHeader.startsWith("Bearer ")){
             token = authHeader.substring(7);
             try {
                 email = jwtService.extractUserName(token);

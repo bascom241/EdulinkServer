@@ -40,7 +40,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
          httpSecurity.csrf(customizer -> customizer.disable())
                  .httpBasic(Customizer.withDefaults())
-                 .authorizeHttpRequests(request-> request.requestMatchers("/api/login", "/api/register").permitAll().anyRequest().authenticated())
+                 .authorizeHttpRequests(request-> request.requestMatchers("/api/login", "/api/v1/auth/register").permitAll().anyRequest().authenticated())
                  .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
                 return httpSecurity.build();
 

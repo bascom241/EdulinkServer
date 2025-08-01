@@ -18,18 +18,18 @@ public class CloudinaryConfig {
     @Value("${cloud-key}")
     private String cloudkey;
 
-    @Value("${cloud}")
+    @Value("${cloud-secret}")
     private String cloudSecret;
 
-
+    @Bean
     public Cloudinary cloudinary(){
         Map<String, String> config = new HashMap<>();
 
-        config.put("cloud-name", cloudName);
-        config.put("cloud-key", cloudkey);
-        config.put("cloud-secret", cloudSecret);
+        config.put("cloud_name", cloudName);
+        config.put("api_key", cloudkey);
+        config.put("api_secret", cloudSecret);
 
-        return new Cloudinary();
+        return new Cloudinary(config);
     }
 
 
