@@ -23,8 +23,18 @@ public class UserRequestDTO{
     private TeachingLevel teachingLevel;
     private String shortBio;
     private int yearsOfExperience;
-    private String certificate;
-    private String governmentId;
+    ///  Certificate Image Collection Data
+    private String certificateUrl;
+    private String certificateImageType;
+    private String certificateImageName;
+
+
+    /// Government Id Image Url
+    private String governmentIdUrl;
+    private String governmentIdImageName;
+    private String governmentIdImageType;
+
+
     private String socialLink;
     private String bankAccount;
     private String bankName;
@@ -59,6 +69,54 @@ public class UserRequestDTO{
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getCertificateUrl() {
+        return certificateUrl;
+    }
+
+    public void setCertificateUrl(String certificateUrl) {
+        this.certificateUrl = certificateUrl;
+    }
+
+    public String getCertificateImageType() {
+        return certificateImageType;
+    }
+
+    public void setCertificateImageType(String certificateImageType) {
+        this.certificateImageType = certificateImageType;
+    }
+
+    public String getCertificateImageName() {
+        return certificateImageName;
+    }
+
+    public void setCertificateImageName(String certificateImageName) {
+        this.certificateImageName = certificateImageName;
+    }
+
+    public String getGovernmentIdUrl() {
+        return governmentIdUrl;
+    }
+
+    public void setGovernmentIdUrl(String governmentIdUrl) {
+        this.governmentIdUrl = governmentIdUrl;
+    }
+
+    public String getGovernmentIdImageName() {
+        return governmentIdImageName;
+    }
+
+    public void setGovernmentIdImageName(String governmentIdImageName) {
+        this.governmentIdImageName = governmentIdImageName;
+    }
+
+    public String getGovernmentIdImageType() {
+        return governmentIdImageType;
+    }
+
+    public void setGovernmentIdImageType(String governmentIdImageType) {
+        this.governmentIdImageType = governmentIdImageType;
     }
 
     public String getConfirmPassword() {
@@ -133,21 +191,8 @@ public class UserRequestDTO{
         this.yearsOfExperience = yearsOfExperience;
     }
 
-    public String getCertificate() {
-        return certificate;
-    }
 
-    public void setCertificate(String certificate) {
-        this.certificate = certificate;
-    }
 
-    public String getGovernmentId() {
-        return governmentId;
-    }
-
-    public void setGovernmentId(String governmentId) {
-        this.governmentId = governmentId;
-    }
 
     public String getSocialLink() {
         return socialLink;

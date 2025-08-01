@@ -1,7 +1,6 @@
 package com.Edulink.EdulinkServer.config;
 
-import com.Edulink.EdulinkServer.model.MyUserDetailService;
-import com.Edulink.EdulinkServer.model.User;
+import com.Edulink.EdulinkServer.service.MyUserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
