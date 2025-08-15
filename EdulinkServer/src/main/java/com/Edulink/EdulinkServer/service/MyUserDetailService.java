@@ -7,6 +7,7 @@ import com.Edulink.EdulinkServer.dto.user.UserRequestDTO;
 import com.Edulink.EdulinkServer.dto.user.UserResponseDTO;
 import com.Edulink.EdulinkServer.model.User;
 import com.cloudinary.utils.ObjectUtils;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -28,6 +29,11 @@ public class MyUserDetailService implements UserDetailsService {
 
     @Autowired
     private UserResponseDTO userResponseDTO;
+
+    @Autowired
+    private ModelMapper modelMapper;
+
+
 
 
 
@@ -54,11 +60,29 @@ public UserResponseDTO registerUser(UserRequestDTO userRequestDTO, MultipartFile
         String certificateUrl = (String) certificateUploadResult.get("secure_url");
         String governmentIdUrl = (String) governmentIdUploadResult.get("secure_url");
 
-        User user = new User();
 
-        user.setEmail(userRequestDTO.getEmail());
-        user.setPassword(bCryptPasswordEncoder.encode(userRequestDTO.getPassword()));
-        user.setConfirmPassword(bCryptPasswordEncoder.encode(userRequestDTO.getConfirmPassword()));
+
+
+        User user = modelMapper.map(userRequestDTO, User.class);
+
+
+
+
+        String password = userRequestDTO.getPassword();
+        String confirmPassword = userRequestDTO.getConfirmPassword();
+
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password cannot be empty");
+        }
+        if (confirmPassword == null || confirmPassword.isBlank()) {
+            throw new IllegalArgumentException("Confirm password cannot be empty");
+        }
+        if (!password.equals(confirmPassword)) {
+            throw new IllegalArgumentException("Passwords do not match");
+        }
+
+        user.setPassword(bCryptPasswordEncoder.encode(password));
+        user.setConfirmPassword(bCryptPasswordEncoder.encode(confirmPassword));
 
         user.setCertificateUrl(certificateUrl);
         user.setCertificateImageName(certificate.getOriginalFilename());

@@ -13,6 +13,7 @@ public class UserPrincipal implements UserDetails {
 
     public UserPrincipal(User user){
         this.user= user;
+
     }
 
 
@@ -23,7 +24,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public String getPassword() {
-        return "";
+        return user.getPassword();
     }
 
     @Override

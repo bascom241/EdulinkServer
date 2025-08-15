@@ -2,6 +2,7 @@ package com.Edulink.EdulinkServer.model;
 
 import com.Edulink.EdulinkServer.enums.TeachingLevel;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 
 @Table(name = "users")
 @Entity
@@ -16,6 +17,7 @@ public class User {
 
     // User Security Details
     @Column(unique = true, nullable = false)
+    @Email(message = "Invalid Email Format")
     private String email;
     private String password;
     private String confirmPassword;
