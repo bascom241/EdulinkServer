@@ -24,7 +24,7 @@ public class ClassRoomController {
     @Autowired
 private ClassroomService classroomService;
 
-    @PostMapping
+    @PostMapping("/create-class")
     public ResponseEntity<?> createClass (
             @RequestPart Classroom classroom,
             @RequestPart List<StudentInfo> students,
@@ -43,11 +43,11 @@ private ClassroomService classroomService;
             )throws IOException {
 
         try {
-            if ((resourcesFiles != null && (resourcesFiles.size() != resourcesTitle.size() || resourcesFiles.size() != resourcesDescription.size())) ||
-                    (assignmentFiles != null && (assignmentFiles.size() != assignmentTitle.size() || assignmentFiles.size() != assignmentDescription.size())) ||
-                    (taskFiles != null && (taskFiles.size() != taskTitle.size() || taskFiles.size() != taskDescription.size()))) {
-                throw new IllegalArgumentException("Files, titles, and descriptions lists must have the same size");
-            }
+//            if ((resourcesFiles != null && (resourcesFiles.size() != resourcesTitle.size() || resourcesFiles.size() != resourcesDescription.size())) ||
+//                    (assignmentFiles != null && (assignmentFiles.size() != assignmentTitle.size() || assignmentFiles.size() != assignmentDescription.size())) ||
+//                    (taskFiles != null && (taskFiles.size() != taskTitle.size() || taskFiles.size() != taskDescription.size()))) {
+//                throw new IllegalArgumentException("Files, titles, and descriptions lists must have the same size");
+//            }
 
             Classroom savedClassRoom =classroomService.addClassroom (
                     classroom,
@@ -58,6 +58,7 @@ private ClassroomService classroomService;
             );
                 return ResponseEntity.status(HttpStatus.CREATED).body(savedClassRoom);
         } catch (Exception e) {
+                System.out.println(e.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
 

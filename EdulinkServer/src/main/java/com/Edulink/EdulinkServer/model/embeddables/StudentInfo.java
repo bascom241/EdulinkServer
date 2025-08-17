@@ -11,6 +11,9 @@ public class StudentInfo {
     private String fullName;
 
 
+    public StudentInfo(){
+
+    }
 
     public  StudentInfo(String email , String fullName){
         this.email = email;
