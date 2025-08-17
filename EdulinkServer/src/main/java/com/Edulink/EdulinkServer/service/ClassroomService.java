@@ -8,12 +8,14 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ClassroomService {
@@ -76,7 +78,76 @@ public class ClassroomService {
     }
 
 
-    public Classroom addMaterials(List<MultipartFile> )
+
+    // Util Function
+    public Classroom findClassRoom (Long classroomId){
+        return classRepository.findById(classroomId).orElseThrow(()->new RuntimeException("Class Room Not Found"));
+    }
+
+    public Classroom addResources(Long classroomId, List<MultipartFile> resourcesFiles , List<String> resourcesTitles , List<String> resourcesDescription ) throws IOException {
+
+        Classroom classroom = findClassRoom(classroomId);
+
+        // Get Existing Resources
+        List<ClassMaterial> existingResources = classroom.getResources();
+
+        List<ClassMaterial> newResources = uploadFiles(resourcesFiles, resourcesTitles, resourcesDescription, "classroom_resources");
+
+        if(existingResources != null){
+            existingResources.addAll(newResources);
+        }else{
+            existingResources  = newResources;
+        }
+
+        classroom.setResources(existingResources);
+
+        return classRepository.save(classroom);
+    }
+
+    public Classroom addAssignments(Long classroomId, List<MultipartFile> assignmentFiles , List<String> assignmentTitle, List<String> assignmentDescription) throws IOException {
+
+        Classroom classroom = findClassRoom(classroomId);
+
+        // Get Existing Assignment
+        List<ClassMaterial> existingAssignment = classroom.getAssignments();
+
+        List<ClassMaterial> newAssignments = uploadFiles(assignmentFiles, assignmentTitle, assignmentDescription, "classroom_assignments");
+
+        if(existingAssignment != null ){
+            existingAssignment.addAll(newAssignments);
+        }else {
+            existingAssignment = newAssignments;
+        }
+
+        classroom.setAssignments(existingAssignment);
+
+        return classRepository.save(classroom);
+    }
+
+
+    public Classroom addTask(Long classRoomId, List<MultipartFile> taskFiles, List<String> taskTitle, List<String> taskDescription) throws IOException {
+        Classroom classroom = findClassRoom(classRoomId);
+
+        // Get All Existing Task;
+
+        List<ClassMaterial> existingTasks = classroom.getTasks();
+
+        List<ClassMaterial> newClassTasks = uploadFiles(taskFiles, taskTitle,taskDescription, "classroom_tasks");
+
+        if(existingTasks != null ){
+            existingTasks.addAll(newClassTasks);
+        } else {
+            existingTasks = newClassTasks;
+        }
+
+        classroom.setTasks(existingTasks);
+
+        return classRepository.save(classroom);
+    }
+
+
 }
+
+
 
 
