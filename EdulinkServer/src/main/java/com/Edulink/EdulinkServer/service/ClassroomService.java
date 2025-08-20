@@ -1,12 +1,15 @@
 package com.Edulink.EdulinkServer.service;
 
+import com.Edulink.EdulinkServer.dao.UserRepository;
 import com.Edulink.EdulinkServer.model.Classroom;
+import com.Edulink.EdulinkServer.model.User;
 import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
 import com.Edulink.EdulinkServer.model.embeddables.StudentInfo;
 import com.Edulink.EdulinkServer.repository.ClassRepository;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,8 +29,15 @@ public class ClassroomService {
     @Autowired
     private Cloudinary cloudinary;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private UserRepository userRepository;
 
 
+    @Autowired
+    private Authentication authentication;
     public Classroom addClassroom(
             Classroom classroom,
             List<StudentInfo> students,
@@ -144,6 +154,80 @@ public class ClassroomService {
 
         return classRepository.save(classroom);
     }
+
+
+
+
+//    public void joincClassroom(StudentInfo studentInfo, int classPrice , Long classroomId, String teacherEmail){
+//        Classroom classroom = findClassRoom(classroomId);
+//
+//        // Add student to list of students
+//        List<StudentInfo> studentInfoList = classroom.getStudents();
+//
+//        boolean studentExist = studentInfoList.contains(studentInfo);
+//        if(studentExist){
+//            throw new RuntimeException("Student Already Exist in this classroom");
+//        } else {
+//            studentInfoList.add(studentInfo);
+//        }
+//        classroom.setStudents(studentInfoList);
+//
+//        // send Email to the teacher for verification
+//        String verifyLink = "http://locahost:5173/studentInfo";
+//        emailService.sendVerifyStudentInformationRequest(teacherEmail, verifyLink, studentInfo );
+//
+//         // Show the teacher the list of students
+//
+//
+//    }
+
+    // Todo
+    public void verifyPayment(){}
+
+    // Todo
+    public String initializePayment(){
+        return "Payed";
+    }
+
+
+
+    public void joinClassroom(StudentInfo studentInfo, int classPrice , Long classroomId, String teacherEmail, Authentication authentication){
+        Classroom classroom = findClassRoom(classroomId);
+
+        // Add student to list of students
+        List<StudentInfo> studentInfoList = classroom.getStudents();
+
+        boolean studentExist = studentInfoList.contains(studentInfo);
+        if(studentExist){
+            throw new RuntimeException("Student Already Exist in this classroom");
+        }
+
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
+        if (user == null){
+            throw new RuntimeException("User Does not exits ");
+        }
+        if(!classroom.isClassroomFull()){
+            throw new RuntimeException("Class room is Full Cant join");
+        } else {
+            studentInfoList.add(studentInfo);
+        }
+
+        String verifyStudent = "http://locahost:5173/notifications";
+        emailService.sendStudentJoinNotification(teacherEmail, verifyStudent, studentInfo);
+
+        // Todo
+        initializePayment();
+        // Todo
+
+
+
+
+    }
+
+
+
+
 
 
 }

@@ -1,0 +1,32 @@
+// Sending Forget Password Api Using Brevo
+1 Dependency
+2 Setting Brevo Api Keys
+3 Create Service for Brevo SMTP
+4 Send EMAIL   // Done
+
+// FrontEnd //
+Reset Password Functionlaity
+
+
+// Join Class Room //
+1.) Send Request to Join a class room and check if they already exits in the teachers students
+2.) Inform the teacher that a student want to join the classroom
+3.) Send the student Information to teacher for review
+4.) Approval by the teacher to join a classroom
+5.) If Approval is accepted then
+6.) Student Submit your email and pay for the classroom
+7.) submit payment to paystack
+8.) Verify payment to join the class room ..
+9.) removal our percentage from the transaction
+10.) Student join the class room
+11.) Add student to the list of teachers student
+
+ // Another Algorithm
+ 1.0  Send Request to Join a class room and check if they already exits in the teachers students
+ 2.0 Check is student is authenticated and Check if students is full before adding the student to that classroom
+ 3.0 if its not full accept the student to the classroom and send email to the teacher and notification about newly joined students
+ 4.0 Charge the student for the classroom and remove our paycut
+ 5.0 Add student to the classroom
+ 6.0 Student Has the power to remove student from the class if certain rue is broken
+
+

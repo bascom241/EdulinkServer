@@ -6,6 +6,7 @@ import com.Edulink.EdulinkServer.dto.user.UserRequestDTO;
 import com.Edulink.EdulinkServer.dto.user.UserResponseDTO;
 import com.Edulink.EdulinkServer.model.User;
 import com.Edulink.EdulinkServer.payload.ApiResponse;
+import com.Edulink.EdulinkServer.service.EmailService;
 import com.Edulink.EdulinkServer.service.JwtService;
 import com.Edulink.EdulinkServer.service.MyUserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @RestController
@@ -35,6 +40,11 @@ public class AuthController {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private EmailService emailService;
+
+
+    private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestPart UserRequestDTO userRequestDTO, @RequestPart MultipartFile certificate , @RequestPart MultipartFile governmentId){
@@ -92,6 +102,68 @@ public class AuthController {
     @GetMapping("/hello")
     public String greetUser(){
         return "Greeting here";
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody UserRequestDTO request){
+        System.out.println(request);
+        try {
+            if (request.getEmail() == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email is required");
+            }
+
+            User user = userRepository.findByEmail(request.getEmail());
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not Found");
+            }
+
+            // generate token
+            String token = UUID.randomUUID().toString();
+            user.setToken(token);
+            user.setTokenExpiry(LocalDateTime.now().plusMinutes(15));
+
+            // save entity
+            userRepository.save(user);
+
+
+
+            // send reset link
+            String resetLink = "http://localhost:5173/reset-password?token=" + token;
+            emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
+
+            return ResponseEntity.status(HttpStatus.OK).body("Reset Password Sent Successfully");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String token , @RequestBody UserRequestDTO requestDTO){
+        try {
+            User user = userRepository.findByToken(token);
+            if(user == null){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token Not Found");
+            }
+            if(user.getTokenExpiry().isBefore(LocalDateTime.now())){
+                throw new RuntimeException("Token Expired");
+            }
+
+
+
+            user.setPassword(bCryptPasswordEncoder.encode(requestDTO.getPassword()));
+            user.setConfirmPassword(bCryptPasswordEncoder.encode(requestDTO.getConfirmPassword()));
+
+            user.setToken(null);
+            user.setTokenExpiry(null);
+
+            userRepository.save(user);
+
+            return ResponseEntity.status(HttpStatus.OK).body("Password Reset Successfully");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
 }

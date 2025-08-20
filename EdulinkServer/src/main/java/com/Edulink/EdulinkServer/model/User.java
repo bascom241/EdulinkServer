@@ -4,6 +4,8 @@ import com.Edulink.EdulinkServer.enums.TeachingLevel;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 
+import java.time.LocalDateTime;
+
 @Table(name = "users")
 @Entity
 public class User {
@@ -22,6 +24,25 @@ public class User {
     private String password;
     private String confirmPassword;
     private String role;
+    private String token;
+
+    public LocalDateTime getTokenExpiry() {
+        return tokenExpiry;
+    }
+
+    public void setTokenExpiry(LocalDateTime tokenExpiry) {
+        this.tokenExpiry = tokenExpiry;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    private LocalDateTime tokenExpiry;
 
     // User Personal details
     private String firstName;

@@ -3,6 +3,8 @@ package com.Edulink.EdulinkServer.dto.user;
 import com.Edulink.EdulinkServer.enums.TeachingLevel;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 public class UserRequestDTO{
     // Identity
@@ -14,6 +16,24 @@ public class UserRequestDTO{
     private String password;
     private String confirmPassword;
     private String role;
+    private LocalDateTime tokenExpiry;
+    private String token;
+
+    public LocalDateTime getTokenExpiry() {
+        return tokenExpiry;
+    }
+
+    public void setTokenExpiry(LocalDateTime tokenExpiry) {
+        this.tokenExpiry = tokenExpiry;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
 
     // Personal
     private String firstName;

@@ -48,7 +48,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(customizer -> customizer.disable());
 //        httpSecurity.httpBasic(Customizer.withDefaults());
-        httpSecurity.authorizeHttpRequests(request-> request.requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/create-class").permitAll().anyRequest().authenticated());
+        httpSecurity.authorizeHttpRequests(request-> request.requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/create-class","/api/v1/auth/forgot-password", "/api/v1/auth/reset-password").permitAll().anyRequest().authenticated());
 //        httpSecurity.exceptionHandling(exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint).accessDeniedHandler(customAccessDeniedHandler));
  httpSecurity.formLogin(form -> form.disable());
         httpSecurity.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

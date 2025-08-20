@@ -22,6 +22,15 @@ public class Classroom {
     @NotNull(message = "Class Name is Required")
     private String className;
 
+    private boolean isClassroomFull = false;
+
+    public boolean isClassroomFull() {
+        return isClassroomFull;
+    }
+
+    public void setClassroomFull(boolean classroomFull) {
+        isClassroomFull = classroomFull;
+    }
 
     @Size(max = 250 , message = "Class Description can not be more than 250 Characters")
     @Column(length = 250)
