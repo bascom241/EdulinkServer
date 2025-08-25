@@ -1,6 +1,6 @@
 package com.Edulink.EdulinkServer.service;
 
-import com.Edulink.EdulinkServer.model.embeddables.StudentInfo;
+import com.Edulink.EdulinkServer.model.StudentInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;

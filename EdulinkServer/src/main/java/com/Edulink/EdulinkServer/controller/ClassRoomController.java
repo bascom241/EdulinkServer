@@ -1,18 +1,24 @@
 package com.Edulink.EdulinkServer.controller;
 
 import com.Edulink.EdulinkServer.model.Classroom;
-import com.Edulink.EdulinkServer.model.embeddables.StudentInfo;
+import com.Edulink.EdulinkServer.model.Question;
+import com.Edulink.EdulinkServer.model.StudentAnswer;
+import com.Edulink.EdulinkServer.model.StudentInfo;
 
 import com.Edulink.EdulinkServer.repository.ClassRepository;
 import com.Edulink.EdulinkServer.service.ClassroomService;
+import com.Edulink.EdulinkServer.service.PayStackService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.management.Query;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -24,6 +30,9 @@ private ClassroomService classroomService;
 
     @Autowired
     private ClassRepository classRepository;
+
+    @Autowired
+    private PayStackService payStackService;
 
     @PostMapping("/create-class")
     public ResponseEntity<?> createClass (
@@ -105,6 +114,47 @@ private ClassroomService classroomService;
             return ResponseEntity.status(HttpStatus.OK).body(foundClassRoom);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/set-question/{classroomId}")
+    public ResponseEntity<?> addQuestion(@PathVariable(name ="classroomId") Long classroomId, @RequestBody Question question){
+        try {
+            Classroom classroom = classroomService.addQuestions(classroomId, question);
+            return ResponseEntity.status(HttpStatus.OK).body(classroom);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+
+    @PostMapping("/answer-question/{questionId}")
+    public ResponseEntity<?> submitAnswer(@PathVariable(name = "questionId") Long questionId, @RequestParam Long studentId , @RequestParam String answer){
+        try {
+            StudentInfo studentInfo = new StudentInfo();
+            studentInfo.setStudentId(studentId);
+
+            StudentAnswer studentAnswer = classroomService.submitAnswer(questionId,studentInfo,answer);
+            return ResponseEntity.status(HttpStatus.OK).body(studentAnswer);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/join/{classroomId}")
+    public ResponseEntity<?> joinClassroom(@PathVariable(name = "classroomId") Long classroomId, @RequestBody  StudentInfo studentInfo, @RequestBody String teacherEmail, @RequestBody int amount){
+        try {
+            Classroom classroom = classroomService.findClassRoom(classroomId);
+
+            boolean isStudentEligibleToJoinClass = classroomService.verifyJoinRequest( studentInfo, classroomId, teacherEmail);
+            if(amount < classroom.getClassroomPrice()){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set the correct Price");
+            }
+            Map<String , String > response = payStackService.initializePayment(studentInfo, classroomId, amount);
+
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

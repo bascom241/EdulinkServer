@@ -8,6 +8,9 @@
 Reset Password Functionlaity
 
 
+// Teacher needs to send questions to students about them before so the question is coming from teacher to students
+// Teacher choose the data he wants to ask the students
+
 // Join Class Room //
 1.) Send Request to Join a class room and check if they already exits in the teachers students
 2.) Inform the teacher that a student want to join the classroom

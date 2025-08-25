@@ -1,11 +1,13 @@
 package com.Edulink.EdulinkServer.service;
 
 import com.Edulink.EdulinkServer.dao.UserRepository;
-import com.Edulink.EdulinkServer.model.Classroom;
-import com.Edulink.EdulinkServer.model.User;
+import com.Edulink.EdulinkServer.enums.QuestionType;
+import com.Edulink.EdulinkServer.model.*;
 import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
-import com.Edulink.EdulinkServer.model.embeddables.StudentInfo;
+
+import com.Edulink.EdulinkServer.repository.AnswerRepository;
 import com.Edulink.EdulinkServer.repository.ClassRepository;
+import com.Edulink.EdulinkServer.repository.QuestionRepository;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +17,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class ClassroomService {
@@ -35,9 +34,14 @@ public class ClassroomService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private QuestionRepository questionRepository;
 
     @Autowired
-    private Authentication authentication;
+    private AnswerRepository answerRepository;
+
+
+
     public Classroom addClassroom(
             Classroom classroom,
             List<StudentInfo> students,
@@ -92,6 +96,10 @@ public class ClassroomService {
     // Util Function
     public Classroom findClassRoom (Long classroomId){
         return classRepository.findById(classroomId).orElseThrow(()->new RuntimeException("Class Room Not Found"));
+    }
+
+    public Question findQuestion(Long questionId){
+        return questionRepository.findById(questionId).orElseThrow(()->new RuntimeException("Question not Found"));
     }
 
     public Classroom addResources(Long classroomId, List<MultipartFile> resourcesFiles , List<String> resourcesTitles , List<String> resourcesDescription ) throws IOException {
@@ -156,6 +164,44 @@ public class ClassroomService {
     }
 
 
+    public Classroom addQuestions(Long classroomId, Question question){
+        Classroom classroom = findClassRoom(classroomId);
+        question.setClassroom(classroom);
+        classroom.getQuestions().add(question);
+        return classRepository.save(classroom);
+    }
+
+
+    public StudentAnswer submitAnswer(Long questionId, StudentInfo studentInfo, String answerText){
+        Question question = findQuestion(questionId);
+
+
+        if (question.getQuestionType() == QuestionType.NUMBER) {
+            try {
+                Integer.parseInt(answerText);
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("Answer must be a number!");
+            }
+        }
+
+        if(question.getQuestionType() == QuestionType.MULTIPLE_CHOICE){
+            List<String> validOptions = Arrays.asList(question.getMultipleChoice().split(","));
+            if (!validOptions.contains(answerText)) {
+                throw new RuntimeException("Answer must be one of: " + validOptions);
+            }
+        }
+
+        StudentAnswer answer = new StudentAnswer();
+        answer.setQuestion(question);
+        answer.setStudentInfo(studentInfo);
+        answer.setAnswer(answerText);
+
+        return answerRepository.save(answer);
+
+
+    }
+
+
 
 
 //    public void joincClassroom(StudentInfo studentInfo, int classPrice , Long classroomId, String teacherEmail){
@@ -181,17 +227,10 @@ public class ClassroomService {
 //
 //    }
 
-    // Todo
-    public void verifyPayment(){}
-
-    // Todo
-    public String initializePayment(){
-        return "Payed";
-    }
 
 
 
-    public void joinClassroom(StudentInfo studentInfo, int classPrice , Long classroomId, String teacherEmail, Authentication authentication){
+    public boolean verifyJoinRequest(StudentInfo studentInfo,  Long classroomId, String teacherEmail){
         Classroom classroom = findClassRoom(classroomId);
 
         // Add student to list of students
@@ -201,27 +240,31 @@ public class ClassroomService {
         if(studentExist){
             throw new RuntimeException("Student Already Exist in this classroom");
         }
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-        if (user == null){
-            throw new RuntimeException("User Does not exits ");
-        }
+//
+//        String email = authentication.getName();
+//        User user = userRepository.findByEmail(email);
+//        if (user == null){
+//            throw new RuntimeException("User Does not exits ");
+//        }
         if(!classroom.isClassroomFull()){
             throw new RuntimeException("Class room is Full Cant join");
-        } else {
-            studentInfoList.add(studentInfo);
         }
-
         String verifyStudent = "http://locahost:5173/notifications";
         emailService.sendStudentJoinNotification(teacherEmail, verifyStudent, studentInfo);
 
-        // Todo
-        initializePayment();
-        // Todo
+        return true;
 
+    }
 
+    public Classroom enrollStudentToClassroom(StudentInfo studentInfo, Long classroomId){
+        Classroom classroom = findClassRoom(classroomId);
 
+        // Add student to list of students
+        List<StudentInfo> studentInfoList = classroom.getStudents();
+
+        classroom.setStudents(studentInfoList);
+
+        return classRepository.save(classroom);
 
     }
 

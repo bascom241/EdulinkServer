@@ -1,7 +1,8 @@
 package com.Edulink.EdulinkServer.model;
 
 import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
-import com.Edulink.EdulinkServer.model.embeddables.StudentInfo;
+
+import com.Edulink.EdulinkServer.model.StudentInfo;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -21,6 +22,18 @@ public class Classroom {
 
     @NotNull(message = "Class Name is Required")
     private String className;
+
+
+    private int classroomPrice;
+
+    public int getClassroomPrice() {
+        return classroomPrice;
+    }
+
+    public void setClassroomPrice(int classroomPrice) {
+        this.classroomPrice = classroomPrice;
+    }
+
 
     private boolean isClassroomFull = false;
 
@@ -66,9 +79,7 @@ public class Classroom {
     private String classCategory;
 
     // To add Existing Student In You Class Room and give them access;
-    @ElementCollection
-    @CollectionTable(name = "classroom-students", joinColumns = @JoinColumn(name = "classroom_id"))
-    private List<StudentInfo> students = new ArrayList<>();
+
 
 
     // Resources
@@ -87,17 +98,28 @@ public class Classroom {
     private List<ClassMaterial> tasks = new ArrayList<>();
 
 
+    @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Question> questions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StudentInfo> students = new ArrayList<>();
 
+    public List<StudentInfo> getStudents() {
+        return students;
+    }
 
+    public void setStudents(List<StudentInfo> students) {
+        this.students = students;
+    }
 
+    public List<Question> getQuestions() {
+        return questions;
+    }
 
-
-
-
-
-
-    // Getters and Setters
+    public void setQuestions(List<Question> questions) {
+        this.questions = questions;
+    }
+// Getters and Setters
 
 
     public Long getClassId() {
@@ -180,13 +202,7 @@ public class Classroom {
         this.classCategory = classCategory;
     }
 
-    public List<StudentInfo> getStudents() {
-        return students;
-    }
 
-    public void setStudents(List<StudentInfo> students) {
-        this.students = students;
-    }
 
     public List<ClassMaterial> getResources() {
         return resources;
