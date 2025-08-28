@@ -13,6 +13,7 @@ import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,9 +41,15 @@ public class ClassroomService {
     @Autowired
     private AnswerRepository answerRepository;
 
+    @Autowired
+    private PayStackService payStackService;
 
 
+
+
+    // Create a Classroom
     public Classroom addClassroom(
+            Long ownerId,
             Classroom classroom,
             List<StudentInfo> students,
 
@@ -51,6 +58,10 @@ public class ClassroomService {
             List<MultipartFile> taskFiles, List<String> taskTitles, List<String> taskDescriptions
     ) throws IOException {
 
+
+        for(StudentInfo student : students){
+            student.setClassroom(classroom);
+        }
         // Set students
         classroom.setStudents(students);
 
@@ -59,9 +70,30 @@ public class ClassroomService {
         classroom.setAssignments(uploadFiles(assignmentFiles, assignmentTitles, assignmentDescriptions, "classroom_assignments"));
         classroom.setTasks(uploadFiles(taskFiles, taskTitles, taskDescriptions, "classroom_tasks"));
 
+        User owner = userRepository.findById(ownerId).orElseThrow(() -> new RuntimeException("Classroom Owner Not Found"));
+
+
+       classroom.setOwner(owner);
+
+
+        if(owner.getBankCode() == null){
+            String subAccountCode = payStackService.createSubAccount(
+                    classroom.getOwner().getFirstName(),
+                    classroom.getOwner().getBankCode(),
+                    classroom.getOwner().getBankAccount(),
+                    90
+            );
+
+            owner.setBankCode(subAccountCode);
+            userRepository.save(classroom.getOwner());
+        }
+
+
         // Save classroom
         return classRepository.save(classroom);
     }
+
+    // Utility Method to add files to Cloudinary
 
     private List<ClassMaterial> uploadFiles(
             List<MultipartFile> files,
@@ -93,15 +125,19 @@ public class ClassroomService {
 
 
 
-    // Util Function
+    // Util Method to Fin Classroom
     public Classroom findClassRoom (Long classroomId){
         return classRepository.findById(classroomId).orElseThrow(()->new RuntimeException("Class Room Not Found"));
     }
 
+
+    // Util Method to Fin Classroom
     public Question findQuestion(Long questionId){
         return questionRepository.findById(questionId).orElseThrow(()->new RuntimeException("Question not Found"));
     }
 
+
+    // Add Resources for students on classroom
     public Classroom addResources(Long classroomId, List<MultipartFile> resourcesFiles , List<String> resourcesTitles , List<String> resourcesDescription ) throws IOException {
 
         Classroom classroom = findClassRoom(classroomId);
@@ -122,6 +158,8 @@ public class ClassroomService {
         return classRepository.save(classroom);
     }
 
+
+    // Add Assignments for students in a classroom
     public Classroom addAssignments(Long classroomId, List<MultipartFile> assignmentFiles , List<String> assignmentTitle, List<String> assignmentDescription) throws IOException {
 
         Classroom classroom = findClassRoom(classroomId);
@@ -143,6 +181,8 @@ public class ClassroomService {
     }
 
 
+
+    // Add File For Tasks for students
     public Classroom addTask(Long classRoomId, List<MultipartFile> taskFiles, List<String> taskTitle, List<String> taskDescription) throws IOException {
         Classroom classroom = findClassRoom(classRoomId);
 
@@ -166,7 +206,13 @@ public class ClassroomService {
 
     public Classroom addQuestions(Long classroomId, Question question){
         Classroom classroom = findClassRoom(classroomId);
+
+
+        if(question.getQuestionType() == null){
+            throw new RuntimeException("Question Type is Required");
+        }
         question.setClassroom(classroom);
+
         classroom.getQuestions().add(question);
         return classRepository.save(classroom);
     }
@@ -202,34 +248,6 @@ public class ClassroomService {
     }
 
 
-
-
-//    public void joincClassroom(StudentInfo studentInfo, int classPrice , Long classroomId, String teacherEmail){
-//        Classroom classroom = findClassRoom(classroomId);
-//
-//        // Add student to list of students
-//        List<StudentInfo> studentInfoList = classroom.getStudents();
-//
-//        boolean studentExist = studentInfoList.contains(studentInfo);
-//        if(studentExist){
-//            throw new RuntimeException("Student Already Exist in this classroom");
-//        } else {
-//            studentInfoList.add(studentInfo);
-//        }
-//        classroom.setStudents(studentInfoList);
-//
-//        // send Email to the teacher for verification
-//        String verifyLink = "http://locahost:5173/studentInfo";
-//        emailService.sendVerifyStudentInformationRequest(teacherEmail, verifyLink, studentInfo );
-//
-//         // Show the teacher the list of students
-//
-//
-//    }
-
-
-
-
     public boolean verifyJoinRequest(StudentInfo studentInfo,  Long classroomId, String teacherEmail){
         Classroom classroom = findClassRoom(classroomId);
 
@@ -240,13 +258,9 @@ public class ClassroomService {
         if(studentExist){
             throw new RuntimeException("Student Already Exist in this classroom");
         }
-//
-//        String email = authentication.getName();
-//        User user = userRepository.findByEmail(email);
-//        if (user == null){
-//            throw new RuntimeException("User Does not exits ");
-//        }
-        if(!classroom.isClassroomFull()){
+
+
+        if(classroom.isClassroomFull()){
             throw new RuntimeException("Class room is Full Cant join");
         }
         String verifyStudent = "http://locahost:5173/notifications";
@@ -255,6 +269,9 @@ public class ClassroomService {
         return true;
 
     }
+
+
+
 
     public Classroom enrollStudentToClassroom(StudentInfo studentInfo, Long classroomId){
         Classroom classroom = findClassRoom(classroomId);
@@ -267,11 +284,6 @@ public class ClassroomService {
         return classRepository.save(classroom);
 
     }
-
-
-
-
-
 
 }
 

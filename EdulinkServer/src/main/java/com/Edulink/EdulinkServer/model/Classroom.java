@@ -3,6 +3,7 @@ package com.Edulink.EdulinkServer.model;
 import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
 
 import com.Edulink.EdulinkServer.model.StudentInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -103,6 +104,19 @@ public class Classroom {
 
     @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StudentInfo> students = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private User owner;
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
+    }
 
     public List<StudentInfo> getStudents() {
         return students;

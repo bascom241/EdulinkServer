@@ -1,11 +1,10 @@
 package com.Edulink.EdulinkServer.controller;
 
-import com.Edulink.EdulinkServer.model.Classroom;
-import com.Edulink.EdulinkServer.model.Question;
-import com.Edulink.EdulinkServer.model.StudentAnswer;
-import com.Edulink.EdulinkServer.model.StudentInfo;
+import com.Edulink.EdulinkServer.dao.UserRepository;
+import com.Edulink.EdulinkServer.model.*;
 
 import com.Edulink.EdulinkServer.repository.ClassRepository;
+import com.Edulink.EdulinkServer.repository.OrderRepository;
 import com.Edulink.EdulinkServer.service.ClassroomService;
 import com.Edulink.EdulinkServer.service.PayStackService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.management.Query;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -34,8 +34,15 @@ private ClassroomService classroomService;
     @Autowired
     private PayStackService payStackService;
 
-    @PostMapping("/create-class")
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @PostMapping("/create-class/{classroomOwner}")
     public ResponseEntity<?> createClass (
+            @PathVariable(name = "classroomOwner") Long classroomOwner,
             @RequestPart Classroom classroom,
             @RequestPart List<StudentInfo> students,
 
@@ -53,13 +60,10 @@ private ClassroomService classroomService;
             )throws IOException {
 
         try {
-//            if ((resourcesFiles != null && (resourcesFiles.size() != resourcesTitle.size() || resourcesFiles.size() != resourcesDescription.size())) ||
-//                    (assignmentFiles != null && (assignmentFiles.size() != assignmentTitle.size() || assignmentFiles.size() != assignmentDescription.size())) ||
-//                    (taskFiles != null && (taskFiles.size() != taskTitle.size() || taskFiles.size() != taskDescription.size()))) {
-//                throw new IllegalArgumentException("Files, titles, and descriptions lists must have the same size");
-//            }
+
 
             Classroom savedClassRoom =classroomService.addClassroom (
+                    classroomOwner,
                     classroom,
                     students,
                     resourcesFiles,    resourcesTitle,  resourcesDescription,
@@ -117,6 +121,7 @@ private ClassroomService classroomService;
         }
     }
 
+    // Set question
     @PostMapping("/set-question/{classroomId}")
     public ResponseEntity<?> addQuestion(@PathVariable(name ="classroomId") Long classroomId, @RequestBody Question question){
         try {
@@ -127,7 +132,7 @@ private ClassroomService classroomService;
         }
     }
 
-
+    // Answer Question request
     @PostMapping("/answer-question/{questionId}")
     public ResponseEntity<?> submitAnswer(@PathVariable(name = "questionId") Long questionId, @RequestParam Long studentId , @RequestParam String answer){
         try {
@@ -141,21 +146,81 @@ private ClassroomService classroomService;
         }
     }
 
-    @PostMapping("/join/{classroomId}")
-    public ResponseEntity<?> joinClassroom(@PathVariable(name = "classroomId") Long classroomId, @RequestBody  StudentInfo studentInfo, @RequestBody String teacherEmail, @RequestBody int amount){
+    @PostMapping("/join/{classroomId}/{ownerId}")
+    public ResponseEntity<?> joinClassroom(@PathVariable(name = "classroomId") Long classroomId, @PathVariable(name = "ownerId") Long ownerId, @RequestBody  StudentInfo studentInfo, @RequestParam String teacherEmail, @RequestParam int amount){
         try {
             Classroom classroom = classroomService.findClassRoom(classroomId);
 
             boolean isStudentEligibleToJoinClass = classroomService.verifyJoinRequest( studentInfo, classroomId, teacherEmail);
+
+            if(!isStudentEligibleToJoinClass){
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not Eligible");
+            }
             if(amount < classroom.getClassroomPrice()){
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set the correct Price");
             }
-            Map<String , String > response = payStackService.initializePayment(studentInfo, classroomId, amount);
+            Map<String , String > response = payStackService.initializePayment(studentInfo, ownerId, amount);
 
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
+    @PostMapping("/webhook")
+    public ResponseEntity<?> webHook(@RequestBody Map<String, Object> payload) {
+        try {
+            String event = (String) payload.get("event");
+
+            if ("charge.success".equals(event)) {
+                Map<String, Object> data = (Map<String, Object>) payload.get("data");
+                String reference = (String) data.get("reference");
+                int amount = (int) data.get("amount"); // amount in kobo
+                String status = (String) data.get("status");
+                String currency = (String) data.get("currency");
+
+                Map<String, Object> subaccount = (Map<String, Object>) data.get("subaccount");
+                String subaccountCode = subaccount != null ? (String) subaccount.get("subaccount_code") : null;
+
+                // metadata
+                Map<String, Object> metadata = (Map<String, Object>) data.get("metadata");
+                Map<String, Object> classroomIdMap = (Map<String, Object>) metadata.get("classroomId");
+                Long classroomOwnerId = Long.valueOf(classroomIdMap.get("userId").toString());
+
+                // customer info
+                Map<String, Object> customer = (Map<String, Object>) data.get("customer");
+                String email = (String) customer.get("email");
+                User student = userRepository.findByEmail(email);
+
+                User classroomOwner = userRepository.findById(classroomOwnerId).orElse(null);
+
+                // check if order already exists
+                if (orderRepository.findByReference(reference) == null) {
+                    Order order = new Order();
+                    order.setReference(reference);
+                    order.setAmount(amount);
+
+                    int platformFee = (int) (amount * 0.10);   // 10% platform fee
+                    int teacherAmount = amount - platformFee;
+
+                    order.setSettlementAmount(teacherAmount); // 90% goes to teacher
+                    order.setCurrency(currency);
+                    order.setStatus(status);
+                    order.setStudent(student);
+                    order.setClassroomOwner(classroomOwner);
+                    order.setSubaccountCode(subaccountCode);
+                    order.setCreatedAt(new Date());
+
+                    orderRepository.save(order);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error processing webhook: " + e.getMessage());
+        }
+
+        return ResponseEntity.ok("Webhook received");
+    }
+
 }
 

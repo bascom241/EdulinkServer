@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Table(name = "users")
 @Entity
@@ -59,6 +61,29 @@ public class User {
     private String certificateUrl;
     private String certificateImageType;
     private String certificateImageName;
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Classroom> classrooms = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "student")
+    private List<Order> orders = new ArrayList<>();
+
+    public List<Order> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<Order> orders) {
+        this.orders = orders;
+    }
+
+    public List<Classroom> getClassrooms() {
+        return classrooms;
+    }
+
+    public void setClassrooms(List<Classroom> classrooms) {
+        this.classrooms = classrooms;
+    }
 
     public String getCertificateUrl() {
         return certificateUrl;
@@ -116,6 +141,15 @@ public class User {
     private String socialLink;
     private String bankAccount;
     private String bankName;
+    private String bankCode;
+
+    public String getBankCode() {
+        return bankCode;
+    }
+
+    public void setBankCode(String bankCode) {
+        this.bankCode = bankCode;
+    }
 
     public Long getUserId() {
         return userId;

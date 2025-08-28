@@ -11,5 +11,4 @@ public class EdulinkServerApplication {
 		System.out.println("Welcome to Edu link Server Application");
 	}
 
-
 }

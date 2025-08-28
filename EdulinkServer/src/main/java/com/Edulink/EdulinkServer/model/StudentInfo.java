@@ -1,7 +1,11 @@
 package com.Edulink.EdulinkServer.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "studentInfos")
@@ -20,7 +24,12 @@ public class StudentInfo {
 
     @ManyToOne
     @JoinColumn(name = "class_id")
+    @JsonIgnore
     private Classroom classroom;
+
+
+
+
 
     public Long getStudentId() {
         return studentId;
