@@ -25,7 +25,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@CrossOrigin("*")
+@CrossOrigin("http://localhost:5173")
 public class AuthController {
     @Autowired
     private MyUserDetailService myUserDetailService;
@@ -165,5 +165,22 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
+    @PostMapping("/user")
+    public ResponseEntity<?> getUser (Authentication authentication){
+        System.out.println("Request Hit ");
+        try {
+
+            User user = userRepository.findByEmail(authentication.getName());
+            System.out.println(user);
+            if(user == null){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
+            }
+            return ResponseEntity.status(HttpStatus.OK).body(user);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
 
 }

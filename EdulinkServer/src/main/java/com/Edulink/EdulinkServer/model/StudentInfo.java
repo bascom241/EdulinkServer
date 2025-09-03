@@ -22,10 +22,22 @@ public class StudentInfo {
 
     private String fullName;
 
-    @ManyToOne
-    @JoinColumn(name = "class_id")
+    public List<Classroom> getClassrooms() {
+        return classrooms;
+    }
+
+    public void setClassrooms(List<Classroom> classrooms) {
+        this.classrooms = classrooms;
+    }
+
+    @ManyToMany
+    @JoinTable(
+            name = "student_classrooms",
+            joinColumns = @JoinColumn(name = "student_id"),
+            inverseJoinColumns = @JoinColumn(name = "classroom_id")
+    )
     @JsonIgnore
-    private Classroom classroom;
+    private List<Classroom> classrooms = new ArrayList<>();
 
 
 
@@ -55,11 +67,4 @@ public class StudentInfo {
         this.fullName = fullName;
     }
 
-    public Classroom getClassroom() {
-        return classroom;
-    }
-
-    public void setClassroom(Classroom classroom) {
-        this.classroom = classroom;
-    }
 }

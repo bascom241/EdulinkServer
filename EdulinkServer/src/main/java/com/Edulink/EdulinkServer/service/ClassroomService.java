@@ -8,6 +8,7 @@ import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
 import com.Edulink.EdulinkServer.repository.AnswerRepository;
 import com.Edulink.EdulinkServer.repository.ClassRepository;
 import com.Edulink.EdulinkServer.repository.QuestionRepository;
+import com.Edulink.EdulinkServer.repository.StudentRepository;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,8 @@ public class ClassroomService {
     private PayStackService payStackService;
 
 
+    @Autowired
+    private StudentRepository studentRepository;
 
 
     // Create a Classroom
@@ -60,10 +63,14 @@ public class ClassroomService {
 
 
         for(StudentInfo student : students){
-            student.setClassroom(classroom);
+            student.getClassrooms().add(classroom);
+            classroom.getStudents().add(student);
         }
-        // Set students
-        classroom.setStudents(students);
+
+
+
+
+
 
         // Upload resources, assignments, tasks
         classroom.setResources(uploadFiles(resourceFiles, resourceTitles, resourceDescriptions, "classroom_resources"));
@@ -89,8 +96,12 @@ public class ClassroomService {
         }
 
 
-        // Save classroom
-        return classRepository.save(classroom);
+        Classroom savedClassroom = classRepository.save(classroom);
+
+// Ensure students are updated
+        studentRepository.saveAll(students);
+
+        return savedClassroom;
     }
 
     // Utility Method to add files to Cloudinary
@@ -269,6 +280,8 @@ public class ClassroomService {
         return true;
 
     }
+
+
 
 
 

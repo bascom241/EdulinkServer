@@ -1,13 +1,17 @@
 package com.Edulink.EdulinkServer.service;
 
+import com.Edulink.EdulinkServer.model.Session;
 import com.Edulink.EdulinkServer.model.StudentInfo;
 import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class EmailService {
@@ -54,6 +58,31 @@ public class EmailService {
 
         } catch (MessagingException e) {
             throw new RuntimeException("Failed to send student join notification", e);
+        }
+    }
+
+    public void sendSessionStartedNotifications(Session session, List<StudentInfo> students, String instructorEmail) {
+        try {
+            for (StudentInfo student : students) {
+                MimeMessage message = javaMailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8"); // enable multipart
+                helper.setFrom("abdulbasitabdulwahab3@gmail.com");
+
+                // Set the recipient individually
+                helper.setTo(student.getEmail());
+
+                // Set subject
+                helper.setSubject("Session Started: " + session.getTopic());
+
+                // Generate personalized HTML for this student
+                String htmlContent = EmailTemplates.sessionStartedHtml(session, student, instructorEmail);
+                helper.setText(htmlContent, true);
+
+                // Send email
+                javaMailSender.send(message);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
