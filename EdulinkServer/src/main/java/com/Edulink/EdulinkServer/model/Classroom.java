@@ -4,6 +4,7 @@ import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
 
 import com.Edulink.EdulinkServer.model.StudentInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -103,10 +104,15 @@ public class Classroom {
     private List<Question> questions = new ArrayList<>();
 
     @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Session> sessions = new ArrayList<>();
 
     @ManyToMany(mappedBy = "classrooms")
     private List<StudentInfo> students = new ArrayList<>();
+
+
+
+
 
     public List<Session> getSessions() {
         return sessions;

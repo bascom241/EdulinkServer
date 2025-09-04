@@ -1,6 +1,7 @@
 package com.Edulink.EdulinkServer.model;
 
 import com.Edulink.EdulinkServer.enums.TeachingLevel;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 
@@ -68,6 +69,18 @@ public class User {
 
     @OneToMany(mappedBy = "student")
     private List<Order> orders = new ArrayList<>();
+
+    @OneToMany(mappedBy = "creator")
+    @JsonManagedReference
+    private List<Session> sessions;
+
+    public List<Session> getSessions() {
+        return sessions;
+    }
+
+    public void setSessions(List<Session> sessions) {
+        this.sessions = sessions;
+    }
 
     public List<Order> getOrders() {
         return orders;
