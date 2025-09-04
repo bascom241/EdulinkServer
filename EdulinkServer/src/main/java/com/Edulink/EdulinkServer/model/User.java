@@ -1,7 +1,7 @@
 package com.Edulink.EdulinkServer.model;
 
 import com.Edulink.EdulinkServer.enums.TeachingLevel;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 
@@ -11,6 +11,8 @@ import java.util.List;
 
 @Table(name = "users")
 @Entity
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "userId")
+
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,7 +55,9 @@ public class User {
     private String phoneNumber;
 
     // User Professional details
+    @JsonIgnore
     private String[] teachingSubjects;
+
     private TeachingLevel teachingLevel;
     private String shortBio;
     private int yearsOfExperience;
@@ -63,15 +67,16 @@ public class User {
     private String certificateImageType;
     private String certificateImageName;
 
+
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Classroom> classrooms = new ArrayList<>();
+
 
 
     @OneToMany(mappedBy = "student")
     private List<Order> orders = new ArrayList<>();
 
     @OneToMany(mappedBy = "creator")
-    @JsonManagedReference
     private List<Session> sessions;
 
     public List<Session> getSessions() {

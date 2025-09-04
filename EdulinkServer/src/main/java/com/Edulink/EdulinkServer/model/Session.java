@@ -1,7 +1,9 @@
 package com.Edulink.EdulinkServer.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -10,6 +12,21 @@ import java.time.LocalDateTime;
 @Table(name = "sessions")
 
 public class Session {
+
+    public Session() {
+    }
+
+    public Session(Long sessionId, String topic, int durationInMinutes, String status, LocalDateTime startTime, LocalDateTime endTime, boolean allowAnyoneToJoin, User creator, Classroom classroom) {
+        this.sessionId = sessionId;
+        this.topic = topic;
+        this.durationInMinutes = durationInMinutes;
+        this.status = status;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.allowAnyoneToJoin = allowAnyoneToJoin;
+        this.creator = creator;
+        this.classroom = classroom;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,12 +48,12 @@ public class Session {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
+
     private User creator;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "classroom_id", nullable = true)
-    @JsonBackReference
+
     private Classroom classroom;
 
     public Long getSessionId() {

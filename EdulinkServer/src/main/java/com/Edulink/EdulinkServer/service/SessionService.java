@@ -2,6 +2,7 @@ package com.Edulink.EdulinkServer.service;
 
 
 import com.Edulink.EdulinkServer.dao.UserRepository;
+import com.Edulink.EdulinkServer.dto.SessionDTO;
 import com.Edulink.EdulinkServer.model.Classroom;
 import com.Edulink.EdulinkServer.model.Session;
 import com.Edulink.EdulinkServer.model.StudentInfo;
@@ -74,7 +75,7 @@ public class SessionService {
 
     }
 
-    public List<Session> getStudentSession(String email) {
+    public List<SessionDTO> getStudentSession(String email) {
         List<StudentInfo> students = studentRepository.findByEmail(email);
 
         for (StudentInfo studentInfo : students){
@@ -97,7 +98,7 @@ public class SessionService {
 
         // Get all sessions for these classrooms
         return classrooms.stream()
-                .flatMap(classroom -> sessionRepository.findByClassroom(classroom).stream())
+                .flatMap(classroom -> sessionRepository.findDTOByClassroom(classroom).stream())
                 .toList();
     }
 

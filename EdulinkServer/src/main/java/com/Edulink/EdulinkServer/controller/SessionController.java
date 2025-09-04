@@ -1,5 +1,6 @@
 package com.Edulink.EdulinkServer.controller;
 
+import com.Edulink.EdulinkServer.dto.SessionDTO;
 import com.Edulink.EdulinkServer.model.Session;
 import com.Edulink.EdulinkServer.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ public class SessionController {
     @GetMapping("/sessions")
     public ResponseEntity<?> getStudentSessions(@RequestParam String studentEmail){
         try {
-            List<Session> sessions = sessionService.getStudentSession(studentEmail);
+            List<SessionDTO> sessions = sessionService.getStudentSession(studentEmail);
             if (sessions.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("No sessions found for this student");

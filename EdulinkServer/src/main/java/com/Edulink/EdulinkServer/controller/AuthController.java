@@ -47,7 +47,7 @@ public class AuthController {
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestPart UserRequestDTO userRequestDTO, @RequestPart MultipartFile certificate , @RequestPart MultipartFile governmentId){
+    public ResponseEntity<?> registerUser(@RequestPart UserRequestDTO userRequestDTO, @RequestPart(value = "certificate" , required = false) MultipartFile certificate , @RequestPart(value = "governmentId" , required = false) MultipartFile governmentId){
         try {
             if(userRequestDTO.getEmail() != null && userRepository.findByEmail(userRequestDTO.getEmail()) != null){
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User Already Exits");

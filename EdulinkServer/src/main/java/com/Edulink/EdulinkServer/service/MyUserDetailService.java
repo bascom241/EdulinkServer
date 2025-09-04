@@ -50,62 +50,72 @@ public class MyUserDetailService implements UserDetailsService {
 
 private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
 
+    public UserResponseDTO registerUser(UserRequestDTO userRequestDTO,
+                                        MultipartFile certificate,
+                                        MultipartFile governmentId) {
+        try {
+            User user = modelMapper.map(userRequestDTO, User.class);
 
-public UserResponseDTO registerUser(UserRequestDTO userRequestDTO, MultipartFile certificate, MultipartFile governmentId){
-    try {
-        Map <String ,Object> certificateUploadResult = cloudinaryConfig.cloudinary().uploader().upload(certificate.getBytes(), ObjectUtils.emptyMap());
-        Map<String, Object> governmentIdUploadResult = cloudinaryConfig.cloudinary().uploader().upload(governmentId.getBytes(), ObjectUtils.emptyMap());
-        System.out.println(governmentIdUploadResult + "" +  certificateUploadResult);
+            // Password validation
+            String password = userRequestDTO.getPassword();
+            String confirmPassword = userRequestDTO.getConfirmPassword();
 
-        String certificateUrl = (String) certificateUploadResult.get("secure_url");
-        String governmentIdUrl = (String) governmentIdUploadResult.get("secure_url");
+            if (password == null || password.isBlank()) {
+                throw new IllegalArgumentException("Password cannot be empty");
+            }
+            if (confirmPassword == null || confirmPassword.isBlank()) {
+                throw new IllegalArgumentException("Confirm password cannot be empty");
+            }
+            if (!password.equals(confirmPassword)) {
+                throw new IllegalArgumentException("Passwords do not match");
+            }
 
+            user.setPassword(bCryptPasswordEncoder.encode(password));
+            user.setConfirmPassword(bCryptPasswordEncoder.encode(confirmPassword));
 
+            // ✅ Upload only if teacher
+            if (user.isTeacher()) {
+                if (certificate == null || governmentId == null) {
+                    throw new IllegalArgumentException("Teacher must provide certificate and government ID");
+                }
 
+                Map<String, Object> certificateUploadResult =
+                        cloudinaryConfig.cloudinary().uploader().upload(certificate.getBytes(), ObjectUtils.emptyMap());
 
-        User user = modelMapper.map(userRequestDTO, User.class);
+                Map<String, Object> governmentIdUploadResult =
+                        cloudinaryConfig.cloudinary().uploader().upload(governmentId.getBytes(), ObjectUtils.emptyMap());
 
+                String certificateUrl = (String) certificateUploadResult.get("secure_url");
+                String governmentIdUrl = (String) governmentIdUploadResult.get("secure_url");
 
+                user.setCertificateUrl(certificateUrl);
+                user.setCertificateImageName(certificate.getOriginalFilename());
+                user.setCertificateImageType(certificate.getContentType());
 
+                user.setGovernmentIdUrl(governmentIdUrl);
+                user.setGovernmentIdImageName(governmentId.getOriginalFilename());
+                user.setGovernmentIdImageType(governmentId.getContentType());
 
-        String password = userRequestDTO.getPassword();
-        String confirmPassword = userRequestDTO.getConfirmPassword();
+                user.setRole("ROLE_TEACHER");
+            } else {
+                user.setRole("ROLE_STUDENT");
+            }
 
-        if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Password cannot be empty");
+            User savedUser = userRepository.save(user);
+
+            // ✅ Build response
+            UserResponseDTO response = new UserResponseDTO();
+            response.setUserId(savedUser.getUserId());
+            response.setFirstName(savedUser.getFirstName());
+            response.setCertificateUrl(savedUser.getCertificateUrl());
+            response.setGovernmentIdUrl(savedUser.getGovernmentIdUrl());
+
+            return response;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        if (confirmPassword == null || confirmPassword.isBlank()) {
-            throw new IllegalArgumentException("Confirm password cannot be empty");
-        }
-        if (!password.equals(confirmPassword)) {
-            throw new IllegalArgumentException("Passwords do not match");
-        }
-
-        user.setPassword(bCryptPasswordEncoder.encode(password));
-        user.setConfirmPassword(bCryptPasswordEncoder.encode(confirmPassword));
-
-        user.setCertificateUrl(certificateUrl);
-        user.setCertificateImageName(certificate.getOriginalFilename());
-        user.setCertificateImageType(certificate.getContentType());
-
-        user.setGovernmentIdUrl(governmentIdUrl);
-        user.setGovernmentIdImageName(governmentId.getOriginalFilename());
-        user.setCertificateImageType(governmentId.getContentType());
-        user.setRole("ROLE_USER");
-
-
-        User savedUser = userRepository.save(user);
-
-        userResponseDTO.setUserId(savedUser.getUserId());
-        userResponseDTO.setFirstName(savedUser.getFirstName());
-        userResponseDTO.setCertificateUrl(savedUser.getCertificateUrl());
-        userResponseDTO.setGovernmentIdUrl(savedUser.getGovernmentIdUrl());
-
-        return userResponseDTO;
-    } catch (Exception e) {
-        throw new RuntimeException(e);
     }
-}
 
 
 
