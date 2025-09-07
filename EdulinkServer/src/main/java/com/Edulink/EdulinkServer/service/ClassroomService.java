@@ -282,10 +282,55 @@ public class ClassroomService {
     }
 
 
+    // Fetching all Classrooms Created by instructors  (Todo)
+    // Fetching all Classrooms Created by instructors and returning Length
+    // Fetching all Classrooms Filterd by full or not ...
+
+
+    public long getInstructorClassroomCount(String email){
+        User instructor = userRepository.findByEmail(email);
+
+        if(instructor == null){
+            throw new RuntimeException("Instructor Not Found");
+        }
+
+        if(!instructor.isTeacher()){
+            throw new RuntimeException("Onl Instructors can have classrooms");
+        }
+
+        return classRepository.countByOwner_Email(email);
+
+    }
+
+    public int getInstructorClassroomStudentCounts(String email){
+        User instructor = userRepository.findByEmail(email);
+
+        if(instructor == null){
+            throw new RuntimeException("Instructor Not Found");
+        }
+
+        List<StudentInfo> students = studentRepository.findAll();
+        List<Classroom> instructorClassrooms = classRepository.findByOwner_Email(email);
+
+        List<StudentInfo> allStudents = instructorClassrooms.stream().flatMap(classroom -> classroom.getStudents().stream())
+                .distinct()
+                .toList();
+
+        return allStudents.size();
+
+    }
 
 
 
 
+
+
+
+
+
+
+
+     // Not sure if it will be Implemented
     public Classroom enrollStudentToClassroom(StudentInfo studentInfo, Long classroomId){
         Classroom classroom = findClassRoom(classroomId);
 

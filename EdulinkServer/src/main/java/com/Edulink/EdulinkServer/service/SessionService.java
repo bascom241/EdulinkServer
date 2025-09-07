@@ -3,6 +3,7 @@ package com.Edulink.EdulinkServer.service;
 
 import com.Edulink.EdulinkServer.dao.UserRepository;
 import com.Edulink.EdulinkServer.dto.SessionDTO;
+import com.Edulink.EdulinkServer.dto.TeacherSessionDto;
 import com.Edulink.EdulinkServer.model.Classroom;
 import com.Edulink.EdulinkServer.model.Session;
 import com.Edulink.EdulinkServer.model.StudentInfo;
@@ -13,6 +14,7 @@ import com.Edulink.EdulinkServer.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -78,9 +80,7 @@ public class SessionService {
     public List<SessionDTO> getStudentSession(String email) {
         List<StudentInfo> students = studentRepository.findByEmail(email);
 
-        for (StudentInfo studentInfo : students){
-            System.out.println(studentInfo);
-        }
+
 
         if (students == null || students.isEmpty()) {
             throw new RuntimeException(email + " is not found in the list of this session");
@@ -101,5 +101,28 @@ public class SessionService {
                 .flatMap(classroom -> sessionRepository.findDTOByClassroom(classroom).stream())
                 .toList();
     }
+    public List<TeacherSessionDto> getTeacherSession(String email) {
+        // Find the instructor
+        User instructor = userRepository.findByEmail(email);
+
+        if (instructor != null && instructor.isStudent()) {
+            throw new RuntimeException("Sessions of instructor can only be queried");
+        }
+
+        // Fetch all sessions created by instructor
+        List<TeacherSessionDto> sessions = sessionRepository.findTeacherSessions(instructor);
+
+        // Filter to only "ONGOING" sessions
+        LocalDateTime now = LocalDateTime.now();
+
+        return sessions.stream()
+                .filter(s -> "ONGOING".equalsIgnoreCase(s.getStatus())) // only ongoing
+//                .filter(s -> s.getStartTime() != null && s.getEndTime() != null)
+//                .filter(s -> !now.isBefore(s.getStartTime())   // already started
+//                        && !now.isAfter(s.getEndTime()))     // not ended yet
+                .toList();
+    }
+
+
 
 }

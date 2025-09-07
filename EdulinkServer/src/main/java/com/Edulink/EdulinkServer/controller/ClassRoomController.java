@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1/classroom")
 public class ClassRoomController {
 
 
@@ -166,6 +166,27 @@ private ClassroomService classroomService;
             throw new RuntimeException(e);
         }
     }
+
+    @GetMapping("/class-count")
+    public ResponseEntity<?> getInstructorClassroomCount(@RequestParam("email") String email){
+        try {
+            long classRoomLength = classroomService.getInstructorClassroomCount(email);
+            return ResponseEntity.ok(classRoomLength);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/students-count")
+    public ResponseEntity<?> getClassroomStudentCount(@RequestParam("email") String email){
+        try {
+            long studentLength = classroomService.getInstructorClassroomStudentCounts(email);
+            return ResponseEntity.ok(studentLength);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
 
     @PostMapping("/webhook")
     public ResponseEntity<?> webHook(@RequestBody Map<String, Object> payload) {

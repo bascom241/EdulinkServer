@@ -2,8 +2,10 @@ package com.Edulink.EdulinkServer.repository;
 
 
 import com.Edulink.EdulinkServer.dto.SessionDTO;
+import com.Edulink.EdulinkServer.dto.TeacherSessionDto;
 import com.Edulink.EdulinkServer.model.Classroom;
 import com.Edulink.EdulinkServer.model.Session;
+import com.Edulink.EdulinkServer.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,7 +25,23 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
             "WHERE s.classroom = :classroom")
     List<SessionDTO> findDTOByClassroom(@Param("classroom") Classroom classroom);
 
+    @Query("SELECT new com.Edulink.EdulinkServer.dto.TeacherSessionDto(" +
+            "s.allowAnyoneToJoin, " +
+            "s.sessionId, " +
+            "s.topic, " +
+            "s.status, " +
+            "s.durationInMinutes, " +
+            "s.startTime, " +   // LocalDateTime
+            "s.endTime, " +     // LocalDateTime
+            "c.className) " +   // adjust to match your Classroom entity field
+            "FROM Session s " +
+            "JOIN s.classroom c " +
+            "WHERE s.creator = :instructor")
+    List<TeacherSessionDto> findTeacherSessions(@Param("instructor") User instructor);
+
     Session findByStatus(String status);
+
+    List<Session> findByCreator(User user);
 
     List<Session> findByEndTimeBefore(LocalDateTime localDateTime);
 }
