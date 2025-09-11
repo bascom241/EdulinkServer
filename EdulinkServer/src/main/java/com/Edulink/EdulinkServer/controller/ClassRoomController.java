@@ -1,15 +1,19 @@
 package com.Edulink.EdulinkServer.controller;
 
 import com.Edulink.EdulinkServer.dao.UserRepository;
+import com.Edulink.EdulinkServer.dto.classroom.ClassroomResponseDto;
 import com.Edulink.EdulinkServer.model.*;
 
 import com.Edulink.EdulinkServer.repository.ClassRepository;
 import com.Edulink.EdulinkServer.repository.OrderRepository;
 import com.Edulink.EdulinkServer.service.ClassroomService;
 import com.Edulink.EdulinkServer.service.PayStackService;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,8 +44,9 @@ private ClassroomService classroomService;
     @Autowired
     private OrderRepository orderRepository;
 
-    @PostMapping("/create-class/{classroomOwner}")
+    @PostMapping(value = "/create-class/{classroomOwner}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createClass (
+
             @PathVariable(name = "classroomOwner") Long classroomOwner,
             @RequestPart Classroom classroom,
             @RequestPart List<StudentInfo> students,
@@ -56,9 +61,11 @@ private ClassroomService classroomService;
 
             @RequestPart(required = false) List<MultipartFile> taskFiles,
             @RequestPart(required = false) List<String> taskTitle,
-            @RequestPart(required = false) List<String> taskDescription
-            )throws IOException {
+            @RequestPart(required = false) List<String> taskDescription,
 
+            HttpServletRequest request
+            )throws IOException {
+        System.out.println("Content-Type: " + request.getContentType());
         try {
 
 
@@ -76,6 +83,30 @@ private ClassroomService classroomService;
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
 
+    }
+
+    @GetMapping("/instructor-classrooms/{email}")
+    public ResponseEntity<?> getAllClassrooms (@PathVariable(name = "email") String email){
+        try {
+            List<ClassroomResponseDto> classrooms = classroomService.findInstructorClassrooms(email);
+            if(classrooms.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Class list is Empty, Create classroom to see your class lists");
+            }
+
+            return ResponseEntity.status(HttpStatus.OK).body(classrooms);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/single-instructor-classroom/{classId}")
+    public ResponseEntity<?> getSingleInstructorClassroom(@RequestParam ("email") String email , @PathVariable(name = "classId") Long classId){
+        try {
+            ClassroomResponseDto classroom = classroomService.findSingleInstructorClassroom(email, classId);
+            return ResponseEntity.status(HttpStatus.OK).body(classroom);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @PutMapping("/add-resources/{classroomId}")

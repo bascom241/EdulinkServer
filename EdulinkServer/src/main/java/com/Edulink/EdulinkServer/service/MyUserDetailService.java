@@ -109,6 +109,7 @@ private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEn
             response.setFirstName(savedUser.getFirstName());
             response.setCertificateUrl(savedUser.getCertificateUrl());
             response.setGovernmentIdUrl(savedUser.getGovernmentIdUrl());
+            response.setSctaPoints(savedUser.getSctaPoints());
 
             return response;
 

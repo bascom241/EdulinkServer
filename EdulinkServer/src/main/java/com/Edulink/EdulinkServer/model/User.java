@@ -73,11 +73,32 @@ public class User {
 
 
 
+
+    private int sctaPoints = 0;
+
+    public int getSctaPoints() {
+        return sctaPoints;
+    }
+
+    public void setSctaPoints(int sctaPoints) {
+        this.sctaPoints = sctaPoints;
+    }
+
     @OneToMany(mappedBy = "student")
     private List<Order> orders = new ArrayList<>();
 
     @OneToMany(mappedBy = "creator")
     private List<Session> sessions;
+
+    private int noOfSessions = 0;
+
+    public int getNoOfSessions() {
+        return noOfSessions;
+    }
+
+    public void setNoOfSessions(int noOfSessions) {
+        this.noOfSessions = noOfSessions;
+    }
 
     public List<Session> getSessions() {
         return sessions;

@@ -39,7 +39,7 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
             "WHERE s.creator = :instructor")
     List<TeacherSessionDto> findTeacherSessions(@Param("instructor") User instructor);
 
-    Session findByStatus(String status);
+    List<Session> findByStatus(String status);
 
     List<Session> findByCreator(User user);
 

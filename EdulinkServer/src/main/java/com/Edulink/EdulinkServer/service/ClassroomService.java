@@ -1,7 +1,9 @@
 package com.Edulink.EdulinkServer.service;
 
 import com.Edulink.EdulinkServer.dao.UserRepository;
+import com.Edulink.EdulinkServer.dto.classroom.ClassroomResponseDto;
 import com.Edulink.EdulinkServer.enums.QuestionType;
+import com.Edulink.EdulinkServer.mapper.ClassroomMapper;
 import com.Edulink.EdulinkServer.model.*;
 import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
 
@@ -139,6 +141,47 @@ public class ClassroomService {
     // Util Method to Fin Classroom
     public Classroom findClassRoom (Long classroomId){
         return classRepository.findById(classroomId).orElseThrow(()->new RuntimeException("Class Room Not Found"));
+    }
+
+    public ClassroomResponseDto findClassInstructorRoom(Long classroomId) {
+        Classroom classroom = classRepository.findById(classroomId)
+                .orElseThrow(() -> new RuntimeException("Class Room Not Found"));
+
+        // convert entity → DTO
+        return ClassroomMapper.toDto(classroom);
+    }
+
+
+
+    // List classrooms that belongs to a single tutor
+
+    public List<ClassroomResponseDto> findInstructorClassrooms(String email){
+        User instructor = userRepository.findByEmail(email);
+        if (instructor == null) {
+            throw new RuntimeException("Instructor not found with email: " + email);
+        }
+        if(!instructor.isTeacher()){
+            throw new RuntimeException("This is for instructor Only");
+        }
+
+        List<Classroom> classrooms = classRepository.findByOwner_Email(email);
+
+        return classrooms.stream().map(ClassroomMapper::toDto).toList();
+    }
+
+    // fetch single Classroom
+    public ClassroomResponseDto findSingleInstructorClassroom(String email , Long classId){
+        User instructor = userRepository.findByEmail(email);
+        if (instructor == null) {
+            throw new RuntimeException("Instructor not found with email: " + email);
+        }
+
+        if (!instructor.isTeacher()) {
+            throw new RuntimeException("This is for instructor Only");
+        }
+
+        return findClassInstructorRoom(classId);
+
     }
 
 
@@ -319,6 +362,8 @@ public class ClassroomService {
         return allStudents.size();
 
     }
+
+
 
 
 

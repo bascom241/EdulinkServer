@@ -104,7 +104,7 @@ public class Classroom {
     private List<Question> questions = new ArrayList<>();
 
     @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+
     private List<Session> sessions = new ArrayList<>();
 
     @ManyToMany(mappedBy = "classrooms")

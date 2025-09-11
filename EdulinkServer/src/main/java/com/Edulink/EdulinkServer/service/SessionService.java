@@ -70,7 +70,7 @@ public class SessionService {
 
         session.setStartTime(start);
         session.setEndTime(end);
-        session.setStatus("ONGOING");
+        session.setStatus("STARTED");
 
         emailService.sendSessionStartedNotifications(session,studentInfo,session.getCreator().getEmail());
         return sessionRepository.save(session);
@@ -101,6 +101,10 @@ public class SessionService {
                 .flatMap(classroom -> sessionRepository.findDTOByClassroom(classroom).stream())
                 .toList();
     }
+
+    public void endSession() {
+
+    } // Todo
     public List<TeacherSessionDto> getTeacherSession(String email) {
         // Find the instructor
         User instructor = userRepository.findByEmail(email);

@@ -1,13 +1,17 @@
 package com.Edulink.EdulinkServer.service;
 
+import com.Edulink.EdulinkServer.dao.UserRepository;
 import com.Edulink.EdulinkServer.model.Session;
+import com.Edulink.EdulinkServer.model.User;
 import com.Edulink.EdulinkServer.repository.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class SessionCleanUpService {
@@ -18,7 +22,10 @@ public class SessionCleanUpService {
     @Autowired
     private SessionRepository sessionRepository;
 
-    @Scheduled(fixedRate = 5 * 60 * 60 * 1000)
+    @Autowired
+    private UserRepository userRepository;
+    // Every midnight
+    @Scheduled(cron = "0 0 0 * * ?")
     public void markSessionsAsEnded() {
         List<Session> expiredSessions = sessionRepository.findByEndTimeBefore(LocalDateTime.now());
         for (Session session : expiredSessions) {
@@ -32,11 +39,36 @@ public class SessionCleanUpService {
 
     }
 
+    // Every midnight
     @Scheduled(cron = "0 0 0 * * ?") // midnight
     public void deleteExpiredSessionsAtMidnight() {
         List<Session> expiredSessions = sessionRepository.findByEndTimeBefore(LocalDateTime.now());
         sessionRepository.deleteAll(expiredSessions);
         System.out.println("Deleted " + expiredSessions.size() + " expired sessions");
     }
+
+    // Every One hour
+    @Scheduled(cron = "0 0 * * * ?")
+    public void incrementSessions (){
+        List<Session> ongoingSessions = sessionRepository.findByStatus("STARTED");
+
+        if(ongoingSessions.isEmpty()) return ;
+        Set<User> teachersToUpdate = new HashSet<>();
+
+        for (Session session : ongoingSessions){
+            User creator = session.getCreator();
+            if(creator != null && creator.isTeacher()){
+                creator.setNoOfSessions(creator.getNoOfSessions() + 1 );
+                teachersToUpdate.add(creator);
+            }
+        }
+
+        userRepository.saveAll(teachersToUpdate);
+        ongoingSessions.forEach(session -> session.setStatus("ONGOING"));
+        sessionRepository.saveAll(ongoingSessions);
+
+
+    }
+
 
 }

@@ -23,6 +23,25 @@ public class UserResponseDTO {
     private String certificateImageType;
     private String certificateImageName;
 
+    private int sctaPoints = 0;
+
+    private int noOfSessions = 0;
+
+    public int getNoOfSessions() {
+        return noOfSessions;
+    }
+
+    public void setNoOfSessions(int noOfSessions) {
+        this.noOfSessions = noOfSessions;
+    }
+
+    public int getSctaPoints() {
+        return sctaPoints;
+    }
+
+    public void setSctaPoints(int sctaPoints) {
+        this.sctaPoints = sctaPoints;
+    }
 
     /// Government Id Image Url
     private String governmentIdUrl;
