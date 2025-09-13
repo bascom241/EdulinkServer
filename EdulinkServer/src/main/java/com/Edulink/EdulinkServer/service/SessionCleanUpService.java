@@ -1,8 +1,10 @@
 package com.Edulink.EdulinkServer.service;
 
 import com.Edulink.EdulinkServer.dao.UserRepository;
+import com.Edulink.EdulinkServer.model.Classroom;
 import com.Edulink.EdulinkServer.model.Session;
 import com.Edulink.EdulinkServer.model.User;
+import com.Edulink.EdulinkServer.repository.ClassRepository;
 import com.Edulink.EdulinkServer.repository.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,6 +26,9 @@ public class SessionCleanUpService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ClassRepository classRepository;
     // Every midnight
     @Scheduled(cron = "0 0 0 * * ?")
     public void markSessionsAsEnded() {
@@ -31,6 +36,13 @@ public class SessionCleanUpService {
         for (Session session : expiredSessions) {
             if (!"ENDED".equals(session.getStatus())) {
                 session.setStatus("ENDED");
+
+                Classroom classroom = session.getClassroom();
+                if(classroom != null && classroom.isSessionOngoing()){
+                    classroom.setSessionOngoing(false);
+                    classRepository.save(classroom);
+                }
+
                 sessionRepository.save(session);
             }
         }

@@ -27,6 +27,26 @@ public class ClassroomResponseDto {
     private int numberOfSessions;
     private int numberOfQuestions;
 
+    private boolean isSessionOngoing = false ;
+
+    public boolean isSessionOngoing() {
+        return isSessionOngoing;
+    }
+
+    public void setSessionOngoing(boolean sessionOngoing) {
+        isSessionOngoing = sessionOngoing;
+    }
+
+    private String inviteLink;
+
+    public String getInviteLink() {
+        return inviteLink;
+    }
+
+    public void setInviteLink(String inviteLink) {
+        this.inviteLink = inviteLink;
+    }
+
     // Getters and Setters
     public Long getClassId() {
         return classId;

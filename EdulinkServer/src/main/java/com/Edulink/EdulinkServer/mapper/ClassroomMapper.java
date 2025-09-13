@@ -13,6 +13,7 @@ public class ClassroomMapper {
         dto.setClassDescription(classroom.getClassDescription());
         dto.setClassroomPrice(classroom.getClassroomPrice());
         dto.setClassroomFull(classroom.isClassroomFull());
+
         dto.setClassDurationInDays(classroom.getClassDurationInDays());
         dto.setCreatedAt(classroom.getCreatedAt());
         dto.setExpiresAt(classroom.getExpiresAt());
@@ -20,6 +21,7 @@ public class ClassroomMapper {
         dto.setClassLocation(classroom.getClassLocation());
         dto.setTargetAudience(classroom.getTargetAudience());
         dto.setClassCategory(classroom.getClassCategory());
+        dto.setSessionOngoing(classroom.isSessionOngoing());
 
         dto.setResources(classroom.getResources());
         dto.setAssignments(classroom.getAssignments());

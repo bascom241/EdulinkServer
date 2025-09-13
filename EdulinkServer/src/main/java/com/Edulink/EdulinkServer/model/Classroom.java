@@ -5,6 +5,7 @@ import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
 import com.Edulink.EdulinkServer.model.StudentInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -58,7 +59,10 @@ public class Classroom {
     private LocalDateTime createdAt;
 
     // When The Classroom Expires
+
     private LocalDateTime expiresAt;
+
+
 
     //Run this method automatically before this entity is first saved to the database.
     @PrePersist
@@ -66,6 +70,7 @@ public class Classroom {
         this.createdAt = LocalDateTime.now();
         this.expiresAt = this.createdAt.plusDays(classDurationInDays);
     }
+
 
     // Specify Where the class will be taken e.g Physical, Online (Heavy Lifting By Frontend)
     @NotNull(message = "You must specify whether Online Or Physical")
@@ -82,7 +87,15 @@ public class Classroom {
 
     // To add Existing Student In You Class Room and give them access;
 
+    private String inviteLink;
 
+    public String getInviteLink() {
+        return inviteLink;
+    }
+
+    public void setInviteLink(String inviteLink) {
+        this.inviteLink = inviteLink;
+    }
 
     // Resources
     @ElementCollection
@@ -106,6 +119,18 @@ public class Classroom {
     @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
 
     private List<Session> sessions = new ArrayList<>();
+
+    @Column(name = "is_session_ongoing")
+    private boolean isSessionOngoing = false;
+
+
+    public boolean isSessionOngoing() {
+        return isSessionOngoing;
+    }
+
+    public void setSessionOngoing(boolean sessionOngoing) {
+        isSessionOngoing = sessionOngoing;
+    }
 
     @ManyToMany(mappedBy = "classrooms")
     private List<StudentInfo> students = new ArrayList<>();

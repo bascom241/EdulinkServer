@@ -24,10 +24,12 @@ public class SessionController {
             @RequestParam String topic,
             @RequestParam int durationInMinutes,
             @RequestParam boolean allowAnyoneToJoin,
+            @RequestParam String  sessionPassword,
+            @RequestParam boolean requirePassword,
             @RequestParam(required = false) Long classroomId
     ) {
         try {
-            Session session = sessionService.startSession(userId, topic, durationInMinutes, allowAnyoneToJoin, classroomId);
+            Session session = sessionService.startSession(userId, topic, durationInMinutes, allowAnyoneToJoin, sessionPassword, requirePassword,  classroomId);
             return ResponseEntity.ok(session);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
@@ -54,6 +56,21 @@ public class SessionController {
     public ResponseEntity<?> getInstructorSessions(@RequestParam String teacherEmail){
         try {
             List<TeacherSessionDto> sessions = sessionService.getTeacherSession(teacherEmail);
+
+            if(sessions.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No sessions for this Instructor");
+            }
+            return ResponseEntity.ok(sessions);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/all-instructor-sessions")
+    public ResponseEntity<?> getAllInstructorSessions(@RequestParam String teacherEmail){
+        try {
+            List<TeacherSessionDto> sessions = sessionService.getAllTeacherSessions(teacherEmail);
 
             if(sessions.isEmpty()){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)

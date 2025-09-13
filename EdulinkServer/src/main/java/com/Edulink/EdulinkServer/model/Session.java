@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "sessions")
@@ -32,6 +33,8 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long sessionId;
 
+
+
     private String topic;
 
     private String status;
@@ -44,6 +47,52 @@ public class Session {
 
     // If true, any user can join the session
     private boolean allowAnyoneToJoin = false;
+
+
+    // Class Location Method
+    @Column(name = "sessionClassLink", nullable = true)
+    private String sessionClassLink;
+
+    @Column(name = "sessionClassLocation", nullable = true)
+    private String sessionClassLocation;
+
+    @Column(name = "requirePassword")
+   private boolean requirePassword = false ;
+
+    public boolean isRequirePassword() {
+        return requirePassword;
+    }
+
+    public void setRequirePassword(boolean requirePassword) {
+        this.requirePassword = requirePassword;
+    }
+
+    @Column(name = "sessionPassword" , nullable = true)
+    private String sessionPassword;
+
+    public String getSessionPassword() {
+        return sessionPassword;
+    }
+
+    public void setSessionPassword(String sessionPassword) {
+        this.sessionPassword = sessionPassword;
+    }
+
+    public String getSessionClassLink() {
+        return sessionClassLink;
+    }
+
+    public void setSessionClassLink(String sessionClassLink) {
+        this.sessionClassLink = sessionClassLink;
+    }
+
+    public String getSessionClassLocation() {
+        return sessionClassLocation;
+    }
+
+    public void setSessionClassLocation(String sessionClassLocation) {
+        this.sessionClassLocation = sessionClassLocation;
+    }
 
 
 

@@ -12,11 +12,13 @@ import com.Edulink.EdulinkServer.repository.ClassRepository;
 import com.Edulink.EdulinkServer.repository.SessionRepository;
 import com.Edulink.EdulinkServer.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class SessionService {
@@ -39,11 +41,13 @@ public class SessionService {
     @Autowired
     private EmailService emailService;
 
-    public Session startSession(Long userId , String topic , int durationInMinutes , boolean allowAnyOneToJoin , Long classRoomId){
+    public Session startSession(Long userId , String topic , int durationInMinutes , boolean allowAnyOneToJoin , String sessionPassword, boolean requirePassword,   Long classRoomId){
         User creator = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Creator not found"));
+
 
         List<StudentInfo> studentInfo = null;
         Classroom classroom = null;
+
 
         if(classRoomId != null){
             classroom = classRepository.findById(classRoomId)
@@ -53,6 +57,12 @@ public class SessionService {
             if (classroom.getOwner() == null || !classroom.getOwner().getUserId().equals(userId)) {
                 throw new RuntimeException("Only classroom owner can create session for this classroom");
             }
+
+            if(!classroom.isSessionOngoing()){
+                classroom.setSessionOngoing(true);
+                classRepository.save(classroom);
+            }
+
 
         }
 
@@ -65,12 +75,34 @@ public class SessionService {
         session.setDurationInMinutes(durationInMinutes);
         session.setAllowAnyoneToJoin(allowAnyOneToJoin);
         session.setClassroom(classroom);
+
+        if(requirePassword){
+            session.setRequirePassword(true);
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(8);
+            String encodedPassword = encoder.encode(sessionPassword);
+            session.setSessionPassword(encodedPassword);
+        }else {
+            session.setSessionPassword(null);
+            session.setRequirePassword(false);
+        }
+
        LocalDateTime start = LocalDateTime.now();
        LocalDateTime end = start.plusMinutes(durationInMinutes);
+
 
         session.setStartTime(start);
         session.setEndTime(end);
         session.setStatus("STARTED");
+
+        String deliveryModel = classroom.getClassDeliveryModel();
+
+        if(Objects.equals(classroom.getClassDeliveryModel(), "Physical")){
+            session.setSessionClassLocation(classroom.getClassLocation());
+        } else if(Objects.equals(classroom.getClassLocation(), "Online")){
+            session.setSessionClassLocation(classroom.getClassLocation());
+        }else {
+            throw new IllegalArgumentException("Unknown Delivery Model: " +  deliveryModel);
+        }
 
         emailService.sendSessionStartedNotifications(session,studentInfo,session.getCreator().getEmail());
         return sessionRepository.save(session);
@@ -125,6 +157,15 @@ public class SessionService {
 //                .filter(s -> !now.isBefore(s.getStartTime())   // already started
 //                        && !now.isAfter(s.getEndTime()))     // not ended yet
                 .toList();
+    }
+    public List<TeacherSessionDto> getAllTeacherSessions(String email){
+        User instructor = userRepository.findByEmail(email);
+
+        if (instructor != null && instructor.isStudent()) {
+            throw new RuntimeException("Sessions of instructor can only be queried");
+        }
+
+        return sessionRepository.findTeacherSessions(instructor);
     }
 
 

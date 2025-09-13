@@ -7,6 +7,7 @@ import com.Edulink.EdulinkServer.model.*;
 import com.Edulink.EdulinkServer.repository.ClassRepository;
 import com.Edulink.EdulinkServer.repository.OrderRepository;
 import com.Edulink.EdulinkServer.service.ClassroomService;
+import com.Edulink.EdulinkServer.service.InviteLinkService;
 import com.Edulink.EdulinkServer.service.PayStackService;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +28,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/classroom")
 public class ClassRoomController {
+
+@Autowired
+private InviteLinkService inviteLinkService;
+
 
 
     @Autowired
@@ -109,8 +114,11 @@ private ClassroomService classroomService;
         }
     }
 
-    @PutMapping("/add-resources/{classroomId}")
+    // For Students To view Study Resources
+
+    @PutMapping(value = "/add-resources/{classroomId}",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> addResources (@PathVariable(name = "classroomId") Long classroomId, @RequestPart(required = false) List<MultipartFile> resourcesFiles,@RequestPart(required = false) List<String> resourcesTitle, @RequestPart(required = false) List<String> resourcesDescription){
+        System.out.print("Server Hit");
         try {
             System.out.println(classroomId);
             System.out.println(resourcesDescription);
@@ -125,7 +133,10 @@ private ClassroomService classroomService;
         }
     }
 
-    @PutMapping("/add-assignment/{classroomId}")
+
+
+    // Upload Recorded Lectures  // for sessions
+    @PutMapping(value = "/add-assignment/{classroomId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> addAssignment (@PathVariable(name = "classroomId")Long classRoomId,     @RequestPart(required = false) List<MultipartFile> assignmentFiles, @RequestPart(required = false) List<String> assignmentTitle, @RequestPart(required = false) List<String> assignmentDescription ){
         try {
             Classroom foundClassroom = classroomService.addAssignments(classRoomId,assignmentFiles,assignmentTitle,assignmentDescription);
@@ -139,6 +150,10 @@ private ClassroomService classroomService;
         }
     }
 
+
+
+
+    // Upload Schedule Resources for students
     @PutMapping("/add-task/{classroomId}")
     public ResponseEntity<?> addTask(@PathVariable(name = "classroomId")Long classRoomId ,  @RequestPart(required = false) List<MultipartFile> taskFiles, @RequestPart(required = false) List<String> taskTitle, @RequestPart(required = false) List<String> taskDescription){
         try {
@@ -196,6 +211,24 @@ private ClassroomService classroomService;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    @GetMapping("/{id}/invite")
+    public Map<String, String> getInviteLink(@PathVariable Long id) {
+        Classroom classroom = classRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Classroom not found"));
+
+        if (classroom.isClassroomFull()) {
+            throw new RuntimeException("Classroom full ");
+        }
+
+        String link = inviteLinkService.generateInviteLink(classroom.getClassId());
+
+        classroom.setInviteLink(link);
+        classRepository.save(classroom);
+
+        return Map.of("inviteLink", link);
     }
 
     @GetMapping("/class-count")
