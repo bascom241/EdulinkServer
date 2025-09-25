@@ -2,13 +2,15 @@ package com.Edulink.EdulinkServer.controller;
 
 import com.Edulink.EdulinkServer.dao.UserRepository;
 import com.Edulink.EdulinkServer.dto.classroom.ClassroomResponseDto;
+import com.Edulink.EdulinkServer.dto.notification.NotificationDTO;
+import com.Edulink.EdulinkServer.dto.notification.NotificationMessage;
 import com.Edulink.EdulinkServer.model.*;
 
-import com.Edulink.EdulinkServer.repository.ClassRepository;
-import com.Edulink.EdulinkServer.repository.OrderRepository;
+import com.Edulink.EdulinkServer.repository.*;
 import com.Edulink.EdulinkServer.service.ClassroomService;
 import com.Edulink.EdulinkServer.service.InviteLinkService;
 import com.Edulink.EdulinkServer.service.PayStackService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +18,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.management.Query;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +54,19 @@ private ClassroomService classroomService;
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private StudentRepository studentRepository;
+
+    @Autowired
+    private WalletRepository walletRepository;
+
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
 
     @PostMapping(value = "/create-class/{classroomOwner}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createClass (
@@ -116,28 +135,52 @@ private ClassroomService classroomService;
 
     // For Students To view Study Resources
 
-    @PutMapping(value = "/add-resources/{classroomId}",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> addResources (@PathVariable(name = "classroomId") Long classroomId, @RequestPart(required = false) List<MultipartFile> resourcesFiles,@RequestPart(required = false) List<String> resourcesTitle, @RequestPart(required = false) List<String> resourcesDescription){
+    @PutMapping(value = "/add-resources/{classroomId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> addResources(
+            @PathVariable(name = "classroomId") Long classroomId,
+            @RequestPart(required = false) List<MultipartFile> resourcesFiles,
+            @RequestParam(required = false , name = "resourcesTitle[]") List<String> resourcesTitle,
+            @RequestParam(required = false, name = "resourcesDescription[]") List<String> resourcesDescription) {
+
         System.out.print("Server Hit");
         try {
-            System.out.println(classroomId);
-            System.out.println(resourcesDescription);
-            System.out.println(resourcesFiles);
-            Classroom foundClassRoom = classroomService.addResources(classroomId,resourcesFiles,resourcesTitle,resourcesDescription);
-            if(foundClassRoom == null ){
+            System.out.println("Classroom ID: " + classroomId);
+            System.out.println("Titles: " + resourcesTitle);
+            System.out.println("Descriptions: " + resourcesDescription);
+            System.out.println("Files: " + (resourcesFiles != null ? resourcesFiles.size() : 0));
+
+            Classroom foundClassRoom = classroomService.addResources(classroomId, resourcesFiles, resourcesTitle, resourcesDescription);
+            if (foundClassRoom == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Class Room Not Found");
             }
-            return ResponseEntity.status(HttpStatus.OK).body(foundClassRoom);
+            return ResponseEntity.status(HttpStatus.OK).body(foundClassRoom.getResources()); // Return just the resources
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+    // Get all the students in a teacher classroom
+    @GetMapping("/my-students")
+    public ResponseEntity<?> getAllInstructorClassrooms (@RequestParam String teacherEmail){
+        System.out.println("Server Hit");
+        try {
+            List<StudentInfo> allStudents = classroomService.getMyClassroomStudents(teacherEmail);
+
+            return ResponseEntity.status(HttpStatus.OK).body(allStudents);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
 
-
     // Upload Recorded Lectures  // for sessions
     @PutMapping(value = "/add-assignment/{classroomId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> addAssignment (@PathVariable(name = "classroomId")Long classRoomId,     @RequestPart(required = false) List<MultipartFile> assignmentFiles, @RequestPart(required = false) List<String> assignmentTitle, @RequestPart(required = false) List<String> assignmentDescription ){
+    public ResponseEntity<?> addAssignment (
+            @PathVariable(name = "classroomId")Long classRoomId,
+            @RequestParam(required = false) List<MultipartFile> assignmentFiles,
+            @RequestParam(required = false) List<String> assignmentTitle,
+            @RequestParam(required = false) List<String> assignmentDescription ){
         try {
             Classroom foundClassroom = classroomService.addAssignments(classRoomId,assignmentFiles,assignmentTitle,assignmentDescription);
             if(foundClassroom == null ){
@@ -154,9 +197,18 @@ private ClassroomService classroomService;
 
 
     // Upload Schedule Resources for students
-    @PutMapping("/add-task/{classroomId}")
-    public ResponseEntity<?> addTask(@PathVariable(name = "classroomId")Long classRoomId ,  @RequestPart(required = false) List<MultipartFile> taskFiles, @RequestPart(required = false) List<String> taskTitle, @RequestPart(required = false) List<String> taskDescription){
+    @PutMapping(value = "/add-task/{classroomId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> addTask(
+            @PathVariable(name = "classroomId")Long classRoomId ,
+            @RequestPart(required = false) List<MultipartFile> taskFiles,
+            @RequestParam(required = false, name = "taskTitle[]") List<String> taskTitle,
+            @RequestParam(required = false, name = "taskDescription[]") List<String> taskDescription){
         try {
+
+            System.out.println("Class Id: " +  classRoomId);
+            System.out.println(" taskFiles: " + (taskFiles != null ? taskFiles.size(): 0));
+            System.out.println("task Title: " + taskTitle);
+            System.out.println("taskDescription: " + taskDescription);
             Classroom foundClassRoom = classroomService.addTask(classRoomId,taskFiles,taskTitle, taskDescription);
             if(foundClassRoom == null){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Class Room Not Found");
@@ -197,15 +249,32 @@ private ClassroomService classroomService;
         try {
             Classroom classroom = classroomService.findClassRoom(classroomId);
 
-            boolean isStudentEligibleToJoinClass = classroomService.verifyJoinRequest( studentInfo, classroomId, teacherEmail);
+            User student = userRepository.findByEmail(studentInfo.getEmail());
+            if (student == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("You can only use registered email to join classrooms");
+            }
 
-            if(!isStudentEligibleToJoinClass){
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not Eligible");
+
+            boolean isStudentExists = classroom.getStudents().stream()
+                    .anyMatch(s -> s.getStudentId().equals(student.getUserId()));
+            if (isStudentExists) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Already Enrolled in this classroom");
+            }
+
+            boolean eligible = classroomService.verifyJoinRequest(studentInfo, classroomId, teacherEmail);
+            if (!eligible) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Not Eligible to join this classroom");
             }
             if(amount < classroom.getClassroomPrice()){
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please set the correct Price");
             }
-            Map<String , String > response = payStackService.initializePayment(studentInfo, ownerId, amount);
+
+            // Some Data which will be displayed in the transaction
+            Map< String , Object > metadata = new HashMap<>();
+            Map<String , String > response = payStackService.initializePayment(studentInfo, classroom, ownerId, amount, metadata);
 
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
@@ -241,54 +310,58 @@ private ClassroomService classroomService;
         }
     }
 
-    @GetMapping("/students-count")
-    public ResponseEntity<?> getClassroomStudentCount(@RequestParam("email") String email){
-        try {
-            long studentLength = classroomService.getInstructorClassroomStudentCounts(email);
-            return ResponseEntity.ok(studentLength);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
 
 
     @PostMapping("/webhook")
     public ResponseEntity<?> webHook(@RequestBody Map<String, Object> payload) {
         try {
-            String event = (String) payload.get("event");
+            System.out.println("== Incoming Webhook ==");
+            System.out.println("Payload: " + new ObjectMapper().writeValueAsString(payload));
 
-            if ("charge.success".equals(event)) {
+            Object eventObj = payload.get("event");
+            System.out.println("Event object: " + eventObj + " (type: " + (eventObj != null ? eventObj.getClass().getName() : "null") + ")");
+
+            if ("charge.success".equalsIgnoreCase(String.valueOf(eventObj).trim())) {
+                System.out.println("Charged was a success ✅");
+
                 Map<String, Object> data = (Map<String, Object>) payload.get("data");
                 String reference = (String) data.get("reference");
-                int amount = (int) data.get("amount"); // amount in kobo
+                BigDecimal amount = new BigDecimal(data.get("amount").toString()); // amount in kobo
                 String status = (String) data.get("status");
                 String currency = (String) data.get("currency");
+
+
+                System.out.println("Ref: " + reference + ", Amount: " + amount + ", Status: " + status);
 
                 Map<String, Object> subaccount = (Map<String, Object>) data.get("subaccount");
                 String subaccountCode = subaccount != null ? (String) subaccount.get("subaccount_code") : null;
 
                 // metadata
                 Map<String, Object> metadata = (Map<String, Object>) data.get("metadata");
-                Map<String, Object> classroomIdMap = (Map<String, Object>) metadata.get("classroomId");
-                Long classroomOwnerId = Long.valueOf(classroomIdMap.get("userId").toString());
+                Long classroomOwnerId = Long.valueOf(metadata.get("ownerId").toString());
+                String classroomName = (String) metadata.get("classroom");
+                String classroomDescription = (String) metadata.get("classroomDescription");
+                BigDecimal classroomPrice = new BigDecimal(metadata.get("classroomPrice").toString());
+                Long classroomId = Long.valueOf(metadata.get("classroomId").toString());
 
+                Classroom classroom = classRepository.findById(classroomId).orElseThrow(()-> new RuntimeException("Classroom Not Found"));
                 // customer info
                 Map<String, Object> customer = (Map<String, Object>) data.get("customer");
                 String email = (String) customer.get("email");
                 User student = userRepository.findByEmail(email);
-
                 User classroomOwner = userRepository.findById(classroomOwnerId).orElse(null);
 
                 // check if order already exists
                 if (orderRepository.findByReference(reference) == null) {
+                    // === Calculate fees ===
+                    BigDecimal platformFee = amount.multiply(BigDecimal.valueOf(0.10));
+                    BigDecimal teacherAmount = amount.subtract(platformFee);
+
+                    // === Save Order ===
                     Order order = new Order();
                     order.setReference(reference);
                     order.setAmount(amount);
-
-                    int platformFee = (int) (amount * 0.10);   // 10% platform fee
-                    int teacherAmount = amount - platformFee;
-
-                    order.setSettlementAmount(teacherAmount); // 90% goes to teacher
+                    order.setSettlementAmount(teacherAmount);
                     order.setCurrency(currency);
                     order.setStatus(status);
                     order.setStudent(student);
@@ -296,8 +369,51 @@ private ClassroomService classroomService;
                     order.setSubaccountCode(subaccountCode);
                     order.setCreatedAt(new Date());
 
+                    order.setClassroomName(classroomName);
+                    order.setClassroomDescription(classroomDescription);
+                    order.setClassroomPrice(classroomPrice);
                     orderRepository.save(order);
+                    System.out.println("Order saved ✅");
+
+                    // === Update Wallet ===
+                    Wallet wallet = walletRepository.findByWalletOwner_UserId(classroomOwnerId)
+                            .orElseGet(() -> {
+                                Wallet newWallet = new Wallet();
+                                newWallet.setWalletOwner(classroomOwner);
+                                return walletRepository.save(newWallet);
+                            });
+
+                    wallet.setBalance(wallet.getBalance().add(teacherAmount));
+                    wallet.setTotalEarnings(wallet.getTotalEarnings().add(teacherAmount));
+                    walletRepository.save(wallet);
+
+
+                    Notification notification = new Notification();
+                    notification.setClassroom(classroom);
+                    notification.setContent(student.getFirstName() + "has Joined your classroom " + classroom.getClassName() );
+                    notification.setTimestamp(LocalDateTime.now());
+                    notification.setType("STUDENT JOINED");
+                    notification.setTeacher(classroomOwner);
+
+                    notificationRepository.save(notification);
+
+
+                    System.out.println("Saved to database");
+                    assert classroomOwner != null;
+                    String destination = "/topic/classroom." + classroomOwner.getUserId();
+
+                    NotificationDTO notificationDTO = new NotificationDTO(
+                            notification.getTimestamp(), notification.getContent(), notification.getType(),
+                            notification.getTeacher().getUserId(), notification.getClassroom().getClassName()
+
+                    );
+                    simpMessagingTemplate.convertAndSend(destination, notificationDTO);
+                    System.out.println(destination);
+                    System.out.println(simpMessagingTemplate);
+                    System.out.println("Wallet updated ✅");
                 }
+            } else {
+                System.out.println("Event was not charge.success: " + eventObj);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -306,6 +422,7 @@ private ClassroomService classroomService;
 
         return ResponseEntity.ok("Webhook received");
     }
+
 
 }
 

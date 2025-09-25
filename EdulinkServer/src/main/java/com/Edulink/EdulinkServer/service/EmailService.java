@@ -61,7 +61,7 @@ public class EmailService {
         }
     }
 
-    public void sendSessionStartedNotifications(Session session, List<StudentInfo> students, String instructorEmail) {
+    public void sendSessionStartedNotifications(Session session, List<StudentInfo> students, String instructorEmail, String classLocation) {
         try {
             for (StudentInfo student : students) {
                 MimeMessage message = javaMailSender.createMimeMessage();
@@ -75,7 +75,7 @@ public class EmailService {
                 helper.setSubject("Session Started: " + session.getTopic());
 
                 // Generate personalized HTML for this student
-                String htmlContent = EmailTemplates.sessionStartedHtml(session, student, instructorEmail);
+                String htmlContent = EmailTemplates.sessionStartedHtml(session, student, instructorEmail, classLocation);
                 helper.setText(htmlContent, true);
 
                 // Send email

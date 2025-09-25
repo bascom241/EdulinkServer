@@ -8,9 +8,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class EdulinkServerApplication {
 
+
+
+
+
 	public static void main(String[] args) {
 		SpringApplication.run(EdulinkServerApplication.class, args);
 		System.out.println("Welcome to Edu link Server Application");
 	}
-
 }

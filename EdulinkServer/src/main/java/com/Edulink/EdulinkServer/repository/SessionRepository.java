@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SessionRepository extends JpaRepository<Session, Long> {
@@ -39,6 +40,19 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
             "WHERE s.creator = :instructor")
     List<TeacherSessionDto> findTeacherSessions(@Param("instructor") User instructor);
 
+    @Query("SELECT new com.Edulink.EdulinkServer.dto.TeacherSessionDto(" +
+            "s.allowAnyoneToJoin, " +
+            "s.sessionId, " +
+            "s.topic, " +
+            "s.status, " +
+            "s.durationInMinutes, " +
+            "s.startTime, " +
+            "s.endTime, " +
+            "c.className) " +
+            "FROM Session s " +
+            "JOIN s.classroom c " +
+            "WHERE s.sessionId = :sessionId")
+    Optional<TeacherSessionDto> findTeacherSessionDtoBySessionId(@Param("sessionId") Long sessionId);
     List<Session> findByStatus(String status);
 
     List<Session> findByCreator(User user);

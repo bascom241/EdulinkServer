@@ -1,6 +1,7 @@
 package com.Edulink.EdulinkServer.service;
 
 import com.Edulink.EdulinkServer.dao.UserRepository;
+import com.Edulink.EdulinkServer.dto.StudentInfoDto;
 import com.Edulink.EdulinkServer.dto.classroom.ClassroomResponseDto;
 import com.Edulink.EdulinkServer.enums.QuestionType;
 import com.Edulink.EdulinkServer.mapper.ClassroomMapper;
@@ -85,17 +86,24 @@ public class ClassroomService {
        classroom.setOwner(owner);
 
 
-        if(owner.getBankCode() == null){
-            String subAccountCode = payStackService.createSubAccount(
-                    classroom.getOwner().getFirstName(),
-                    classroom.getOwner().getBankCode(),
-                    classroom.getOwner().getBankAccount(),
-                    90
-            );
+       try {
+           if(owner.getSubAccountCode() == null){
+               String subAccountCode = payStackService.createSubAccount(
+                       classroom.getOwner().getFirstName(),
+                       classroom.getOwner().getBankCode(),
+                       classroom.getOwner().getBankAccount(),
+                       90
+               );
 
-            owner.setBankCode(subAccountCode);
-            userRepository.save(classroom.getOwner());
-        }
+
+               owner.setBankCode(subAccountCode);
+               userRepository.updateSubAccountCode(owner.getUserId(), subAccountCode);
+           }
+       } catch (Exception e) {
+           System.out.println(e.getMessage());
+           throw new RuntimeException(e);
+       }
+
 
 
         Classroom savedClassroom = classRepository.save(classroom);
@@ -305,20 +313,14 @@ public class ClassroomService {
     public boolean verifyJoinRequest(StudentInfo studentInfo,  Long classroomId, String teacherEmail){
         Classroom classroom = findClassRoom(classroomId);
 
-        // Add student to list of students
-        List<StudentInfo> studentInfoList = classroom.getStudents();
-
-        boolean studentExist = studentInfoList.contains(studentInfo);
-        if(studentExist){
-            throw new RuntimeException("Student Already Exist in this classroom");
+        // check if classroom is full
+        if (classroom.isClassroomFull()) {
+            throw new RuntimeException("Classroom is full. Can't join.");
         }
 
-
-        if(classroom.isClassroomFull()){
-            throw new RuntimeException("Class room is Full Cant join");
-        }
-        String verifyStudent = "http://locahost:5173/notifications";
-        emailService.sendStudentJoinNotification(teacherEmail, verifyStudent, studentInfo);
+        // send notification
+        String verifyStudentUrl = "http://localhost:5173/notifications";
+        emailService.sendStudentJoinNotification(teacherEmail, verifyStudentUrl, studentInfo);
 
         return true;
 
@@ -361,6 +363,21 @@ public class ClassroomService {
 
         return allStudents.size();
 
+    }
+
+    // Get all students for a class room
+    public List<StudentInfo> getMyClassroomStudents ( String teacherEmail) {
+        // get the user by email
+        User instructor = userRepository.findByEmail(teacherEmail);
+        if(instructor == null){
+            throw new RuntimeException("Instructor Not Found");
+        }
+
+       List<StudentInfo> students = studentRepository.findAll();
+        // get a single classroom
+        List<Classroom> teacherClassrooms = classRepository.findByOwner_Email(teacherEmail);
+
+        return teacherClassrooms.stream().flatMap(classroom -> classroom.getStudents().stream()).distinct().toList();
     }
 
 

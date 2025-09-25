@@ -1,8 +1,15 @@
 package com.Edulink.EdulinkServer.dto.classroom;
 
+import com.Edulink.EdulinkServer.dto.SessionDTO;
+import com.Edulink.EdulinkServer.dto.StudentInfoDto;
+import com.Edulink.EdulinkServer.model.Session;
+import com.Edulink.EdulinkServer.model.StudentInfo;
 import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.ManyToMany;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ClassroomResponseDto {
@@ -22,6 +29,28 @@ public class ClassroomResponseDto {
     private List<ClassMaterial> resources;
     private List<ClassMaterial> assignments;
     private List<ClassMaterial> tasks;
+
+
+
+    private List<StudentInfoDto> students ;
+
+    private List<SessionDTO> sessions;
+
+    public List<StudentInfoDto> getStudents() {
+        return students;
+    }
+
+    public void setStudents(List<StudentInfoDto> students) {
+        this.students = students;
+    }
+
+    public List<SessionDTO> getSessions() {
+        return sessions;
+    }
+
+    public void setSessions(List<SessionDTO> sessions) {
+        this.sessions = sessions;
+    }
 
     private int numberOfStudents;  // instead of exposing all student details
     private int numberOfSessions;

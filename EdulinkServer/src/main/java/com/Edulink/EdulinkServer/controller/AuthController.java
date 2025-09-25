@@ -4,11 +4,13 @@ package com.Edulink.EdulinkServer.controller;
 import com.Edulink.EdulinkServer.dao.UserRepository;
 import com.Edulink.EdulinkServer.dto.user.UserRequestDTO;
 import com.Edulink.EdulinkServer.dto.user.UserResponseDTO;
+import com.Edulink.EdulinkServer.mapper.UserMapper;
 import com.Edulink.EdulinkServer.model.User;
 import com.Edulink.EdulinkServer.payload.ApiResponse;
 import com.Edulink.EdulinkServer.service.EmailService;
 import com.Edulink.EdulinkServer.service.JwtService;
 import com.Edulink.EdulinkServer.service.MyUserDetailService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +44,10 @@ public class AuthController {
 
     @Autowired
     private EmailService emailService;
+
+
+    @Autowired
+    private ModelMapper modelMapper;
 
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
@@ -175,7 +181,10 @@ public class AuthController {
             if(user == null){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
             }
-            return ResponseEntity.status(HttpStatus.OK).body(user);
+
+            // Todo Map the Dto together
+            UserResponseDTO userResponseDTO = modelMapper.map(user, UserResponseDTO.class);
+            return ResponseEntity.status(HttpStatus.OK).body(userResponseDTO);
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

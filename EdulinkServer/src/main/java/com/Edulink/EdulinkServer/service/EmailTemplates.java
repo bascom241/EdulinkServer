@@ -120,7 +120,7 @@ public class EmailTemplates {
    """.formatted(studentName, studentEmail, verifyLink, verifyLink, verifyLink);
     }
 
-    public static String sessionStartedHtml(Session session, StudentInfo studentInfo, String instructorEmail) {
+    public static String sessionStartedHtml(Session session, StudentInfo studentInfo, String instructorEmail, String classLocation) {
         String studentName = studentInfo != null ? studentInfo.getFullName() : "Student";
         String topic = session != null ? session.getTopic() : "Your session";
 
@@ -173,6 +173,7 @@ public class EmailTemplates {
           <div class="row"><span class="label">Start Time:</span> <strong>%s</strong></div>
           <div class="row"><span class="label">End Time:</span> <strong>%s</strong></div>
           <div class="row"><span class="label">Duration:</span> <strong>%s</strong></div>
+          <div class="row"><span class="label">Class Location:</span> <strong>%s</strong></div>
         </div>
 
         <p class="muted">Please join the session promptly.</p>
@@ -181,8 +182,9 @@ public class EmailTemplates {
       </div>
     </body>
     </html>
-    """.formatted(studentName, topic, instructorEmail, studentName, instructorEmail, startTime, endTime, duration);
+    """.formatted(studentName, topic, instructorEmail, studentName, instructorEmail, startTime, endTime, duration, classLocation);
     }
+
     private static String safe(String v){
         return v == null ? "" : v.replace("<","&lt;").replace(">","&gt;");
     }

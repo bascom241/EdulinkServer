@@ -82,6 +82,21 @@ public class SessionController {
         }
     }
 
+    
+
+    @GetMapping("/instructor/{sessionId}")
+    public ResponseEntity<?> getSingleSession(@PathVariable(name = "sessionId") Long sessionId , @RequestParam String teacherEmail){
+        try {
+            TeacherSessionDto teacherSessionDto = sessionService.getTeacherSingleSession(teacherEmail, sessionId);
+            if(teacherSessionDto == null){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session Cant Be found Or Ended");
+            }
+            return ResponseEntity.status(HttpStatus.OK).body(teacherSessionDto);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
 
 
 }

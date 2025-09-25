@@ -17,8 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class SessionService {
@@ -39,6 +38,8 @@ public class SessionService {
     private StudentRepository studentRepository;
 
     @Autowired
+    private AttendanceService attendanceService;
+    @Autowired
     private EmailService emailService;
 
     public Session startSession(Long userId , String topic , int durationInMinutes , boolean allowAnyOneToJoin , String sessionPassword, boolean requirePassword,   Long classRoomId){
@@ -47,6 +48,7 @@ public class SessionService {
 
         List<StudentInfo> studentInfo = null;
         Classroom classroom = null;
+
 
 
         if(classRoomId != null){
@@ -75,6 +77,7 @@ public class SessionService {
         session.setDurationInMinutes(durationInMinutes);
         session.setAllowAnyoneToJoin(allowAnyOneToJoin);
         session.setClassroom(classroom);
+        session.setStudents(new ArrayList<>());
 
         if(requirePassword){
             session.setRequirePassword(true);
@@ -96,6 +99,7 @@ public class SessionService {
 
         String deliveryModel = classroom.getClassDeliveryModel();
 
+
         if(Objects.equals(classroom.getClassDeliveryModel(), "Physical")){
             session.setSessionClassLocation(classroom.getClassLocation());
         } else if(Objects.equals(classroom.getClassLocation(), "Online")){
@@ -104,15 +108,17 @@ public class SessionService {
             throw new IllegalArgumentException("Unknown Delivery Model: " +  deliveryModel);
         }
 
-        emailService.sendSessionStartedNotifications(session,studentInfo,session.getCreator().getEmail());
-        return sessionRepository.save(session);
+        emailService.sendSessionStartedNotifications(session,studentInfo,session.getCreator().getEmail(), deliveryModel);
+        Session savedSession = sessionRepository.save(session);
+        if(studentInfo != null && studentInfo.isEmpty()){
+            attendanceService.createAttendanceForSession(savedSession);
+        }
+        return savedSession;
 
     }
 
     public List<SessionDTO> getStudentSession(String email) {
         List<StudentInfo> students = studentRepository.findByEmail(email);
-
-
 
         if (students == null || students.isEmpty()) {
             throw new RuntimeException(email + " is not found in the list of this session");
@@ -136,7 +142,7 @@ public class SessionService {
 
     public void endSession() {
 
-    } // Todo
+    } // Todo  // Get Ongoing Single Teacher Session
     public List<TeacherSessionDto> getTeacherSession(String email) {
         // Find the instructor
         User instructor = userRepository.findByEmail(email);
@@ -167,6 +173,68 @@ public class SessionService {
 
         return sessionRepository.findTeacherSessions(instructor);
     }
+
+    public TeacherSessionDto getTeacherSingleSession(String teacherEmail, Long sessionId){
+        User instructor = userRepository.findByEmail(teacherEmail);
+
+         if(instructor != null && instructor.isStudent()){
+         throw new RuntimeException("Only Instruction can be received");
+        }
+         return sessionRepository.findTeacherSessionDtoBySessionId(sessionId). orElseThrow(() -> new RuntimeException("Classroom not found"));
+
+
+    }
+
+
+    public void joinSessionAsStudent(Long studentId, Long sessionId) {
+
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        StudentInfo student = studentRepository.findById(studentId).orElseGet(() -> {
+            StudentInfo studentInfo = new StudentInfo();
+            studentInfo.setUser(user);
+            studentInfo.setEmail(user.getEmail());
+            studentInfo.setFirstName(user.getFirstName());
+            studentInfo.setLastName(user.getLastName());
+            studentInfo.setPhoneNumber(user.getPhoneNumber());
+            return studentRepository.save(studentInfo);
+        });
+
+        student.setStudentInASession(true);
+        student.setJoinDate(String.valueOf(LocalDateTime.now()));
+        student.setLastActive(String.valueOf(LocalDateTime.now()));
+
+        if (student.getProgress() == null) {
+            student.setProgress(0.0);
+        }
+        if (student.getAttendanceRate() == null) {
+            student.setAttendanceRate(0.0);
+        }
+
+        Session foundSession = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not Found"));
+
+        Classroom classroom = foundSession.getClassroom();
+
+        // ✅ check membership by ID
+        boolean belongsToClassroom = classroom.getStudents().stream()
+                .anyMatch(s -> s.getStudentId().equals(student.getStudentId()));
+        if (!belongsToClassroom) {
+            throw new RuntimeException("You do not belong to this classroom");
+        }
+
+        // ✅ keep both sides in sync
+        foundSession.getStudents().add(student);
+        student.getSessions().add(foundSession);
+
+        // save both
+        sessionRepository.save(foundSession);
+        studentRepository.save(student);
+    }
+
+
+
 
 
 

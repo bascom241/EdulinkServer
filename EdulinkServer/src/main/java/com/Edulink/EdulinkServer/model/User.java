@@ -182,6 +182,16 @@ public class User {
     private String bankName;
     private String bankCode;
 
+    private String subAccountCode;
+
+    public String getSubAccountCode() {
+        return subAccountCode;
+    }
+
+    public void setSubAccountCode(String subAccountCode) {
+        this.subAccountCode = subAccountCode;
+    }
+
     public String getBankCode() {
         return bankCode;
     }

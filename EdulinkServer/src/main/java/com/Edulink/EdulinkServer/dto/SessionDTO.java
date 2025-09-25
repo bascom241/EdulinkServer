@@ -5,7 +5,7 @@ import com.Edulink.EdulinkServer.model.Session;
 import java.time.LocalDateTime;
 
 public class SessionDTO {
-    private final boolean allowAnyoneToJoin;
+    private  boolean allowAnyoneToJoin;
     private Long sessionId;
     private String topic;
     private String status;
@@ -35,6 +35,12 @@ public class SessionDTO {
         this.allowAnyoneToJoin = allowAnyoneToJoin;
         this.creatorFirstName = creatorFirstName;
         this.creatorLastName = creatorLastName;
+    }
+
+
+
+    public SessionDTO() {
+
     }
 
     public Long getSessionId() {

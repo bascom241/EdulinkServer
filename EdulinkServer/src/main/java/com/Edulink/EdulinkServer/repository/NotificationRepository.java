@@ -10,8 +10,9 @@ import java.util.List;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
-//    @Query("SELECT n FROM Notification n WHERE n.classroom.<exactFieldName> = :classroomId ORDER BY n.timestamp DESC")
-//    List<Notification> findByClassroomIdOrdered(@Param("classroomId") Long classroomId);
 
+    @Query("SELECT n FROM Notification n WHERE n.classroom.id = :classroomId ORDER BY n.timestamp ASC")
+    List<Notification> findByClassroomIdOrdered(Long classroomId);
 
+    List<Notification> findByTeacher_UserIdOrderByTimestampDesc(Long teacherId);
 }

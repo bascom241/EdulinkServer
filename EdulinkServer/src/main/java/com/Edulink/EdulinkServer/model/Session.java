@@ -1,12 +1,9 @@
 package com.Edulink.EdulinkServer.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -17,7 +14,7 @@ public class Session {
     public Session() {
     }
 
-    public Session(Long sessionId, String topic, int durationInMinutes, String status, LocalDateTime startTime, LocalDateTime endTime, boolean allowAnyoneToJoin, User creator, Classroom classroom) {
+    public Session(Long sessionId, String topic, int durationInMinutes, String status, LocalDateTime startTime, LocalDateTime endTime, boolean allowAnyoneToJoin, User creator, Classroom classroom, List<StudentInfo> studentInfo) {
         this.sessionId = sessionId;
         this.topic = topic;
         this.durationInMinutes = durationInMinutes;
@@ -27,13 +24,24 @@ public class Session {
         this.allowAnyoneToJoin = allowAnyoneToJoin;
         this.creator = creator;
         this.classroom = classroom;
+        this.students = studentInfo;
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long sessionId;
 
+    @ManyToMany(mappedBy = "sessions")
+    private List<StudentInfo> students = new ArrayList<>();
 
+
+    public List<StudentInfo> getStudents() {
+        return students;
+    }
+
+    public void setStudents(List<StudentInfo> students) {
+        this.students = students;
+    }
 
     private String topic;
 
@@ -104,6 +112,9 @@ public class Session {
     @JoinColumn(name = "classroom_id", nullable = true)
 
     private Classroom classroom;
+
+
+
 
     public Long getSessionId() {
         return sessionId;

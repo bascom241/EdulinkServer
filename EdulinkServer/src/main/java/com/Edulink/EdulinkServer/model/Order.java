@@ -2,6 +2,8 @@ package com.Edulink.EdulinkServer.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity
@@ -13,8 +15,8 @@ public class Order {
     private Long id;
 
     private String reference;   // Paystack reference
-    private Integer amount;     // Total paid by student (in kobo)
-    private Integer settlementAmount; // Amount classroom owner actually receives
+    private BigDecimal amount;     // Total paid by student (in kobo)
+    private BigDecimal settlementAmount; // Amount classroom owner actually receives
     private String currency;    // e.g. "NGN"
     private String status;      // success, failed, pending
 
@@ -35,6 +37,33 @@ public class Order {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
 
+    private String classroomName;
+    private String classroomDescription;
+    private BigDecimal classroomPrice;
+
+    public String getClassroomName() {
+        return classroomName;
+    }
+
+    public void setClassroomName(String classroomName) {
+        this.classroomName = classroomName;
+    }
+
+    public String getClassroomDescription() {
+        return classroomDescription;
+    }
+
+    public void setClassroomDescription(String classroomDescription) {
+        this.classroomDescription = classroomDescription;
+    }
+
+    public BigDecimal getClassroomPrice() {
+        return classroomPrice;
+    }
+
+    public void setClassroomPrice(BigDecimal classroomPrice) {
+        this.classroomPrice = classroomPrice;
+    }
 
     public String getReference() {
         return reference;
@@ -44,19 +73,19 @@ public class Order {
         this.reference = reference;
     }
 
-    public Integer getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(Integer amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
-    public Integer getSettlementAmount() {
+    public BigDecimal getSettlementAmount() {
         return settlementAmount;
     }
 
-    public void setSettlementAmount(Integer settlementAmount) {
+    public void setSettlementAmount(BigDecimal settlementAmount) {
         this.settlementAmount = settlementAmount;
     }
 
