@@ -15,4 +15,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findByClassroomIdOrdered(Long classroomId);
 
     List<Notification> findByTeacher_UserIdOrderByTimestampDesc(Long teacherId);
+    List<Notification> findByTeacher_UserIdAndIsReadFalse(Long teacherId);
+    List<Notification> findByTeacher_UserIdAndIsReadTrue(Long teacherId);
 }

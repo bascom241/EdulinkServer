@@ -30,6 +30,8 @@ public class Notification {
     // Type of notification (e.g., TEACHER_MESSAGE, STUDENT_JOINED)
     private String type;
 
+    private Boolean isRead = false;
+
     // ---------------- Getters and Setters ----------------
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -42,6 +44,14 @@ public class Notification {
 
     public User getTeacher() { return teacher; }
     public void setTeacher(User teacher) { this.teacher = teacher; }
+
+    public Boolean getRead() {
+        return isRead;
+    }
+
+    public void setRead(Boolean read) {
+        isRead = read;
+    }
 
     public Classroom getClassroom() { return classroom; }
     public void setClassroom(Classroom classroom) { this.classroom = classroom; }

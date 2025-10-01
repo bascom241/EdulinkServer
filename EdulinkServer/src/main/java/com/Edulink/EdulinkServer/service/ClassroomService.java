@@ -365,34 +365,52 @@ public class ClassroomService {
 
     }
 
+    // Todo ( Has a bug )
     // Get all students for a class room
-    public List<StudentInfo> getMyClassroomStudents ( String teacherEmail) {
-        // get the user by email
+    public List<StudentInfoDto> getMyClassroomStudents(String teacherEmail) {
+        // 1. Find the instructor
         User instructor = userRepository.findByEmail(teacherEmail);
-        if(instructor == null){
+        if (instructor == null) {
             throw new RuntimeException("Instructor Not Found");
         }
+        System.out.println("Instructor found: " + instructor.getEmail() + " (id=" + instructor.getUserId() + ")");
 
-       List<StudentInfo> students = studentRepository.findAll();
-        // get a single classroom
+        // 2. Get all classrooms owned by this instructor
         List<Classroom> teacherClassrooms = classRepository.findByOwner_Email(teacherEmail);
+        System.out.println("Total classrooms found for instructor: " + teacherClassrooms.size());
 
-        return teacherClassrooms.stream().flatMap(classroom -> classroom.getStudents().stream()).distinct().toList();
+        teacherClassrooms.forEach(c -> {
+            System.out.println("Classroom -> id=" + c.getClassId() + ", name=" + c.getClassName());
+            try {
+                System.out.println("   Students count = " + c.getStudents().size());
+            } catch (Exception e) {
+                System.out.println("   Error accessing students: " + e.getMessage());
+            }
+        });
+
+        // 3. Flatten all students from those classrooms and map to DTOs
+        List<StudentInfoDto> students = teacherClassrooms.stream()
+                .flatMap(c -> c.getStudents().stream())   // get students from each classroom
+                .distinct()                               // remove duplicates
+                .map(s -> new StudentInfoDto(             // convert to DTO
+                        s.getStudentId(),
+                        s.getFirstName(),
+                        s.getLastName(),
+                        s.getEmail()
+                ))
+                .toList();
+
+        System.out.println("Total unique students returned: " + students.size());
+        students.forEach(s ->
+                System.out.println("   Student -> id=" + s.getStudentId() + ", email=" + s.getEmail())
+        );
+
+        return students;
     }
 
 
 
-
-
-
-
-
-
-
-
-
-
-     // Not sure if it will be Implemented
+    // Not sure if it will be Implemented
     public Classroom enrollStudentToClassroom(StudentInfo studentInfo, Long classroomId){
         Classroom classroom = findClassRoom(classroomId);
 

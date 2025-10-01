@@ -1,6 +1,7 @@
 package com.Edulink.EdulinkServer.controller;
 
 import com.Edulink.EdulinkServer.dao.UserRepository;
+import com.Edulink.EdulinkServer.dto.StudentInfoDto;
 import com.Edulink.EdulinkServer.dto.classroom.ClassroomResponseDto;
 import com.Edulink.EdulinkServer.dto.notification.NotificationDTO;
 import com.Edulink.EdulinkServer.dto.notification.NotificationMessage;
@@ -13,6 +14,7 @@ import com.Edulink.EdulinkServer.service.PayStackService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
@@ -26,10 +28,7 @@ import javax.management.Query;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/classroom")
@@ -165,7 +164,7 @@ private ClassroomService classroomService;
     public ResponseEntity<?> getAllInstructorClassrooms (@RequestParam String teacherEmail){
         System.out.println("Server Hit");
         try {
-            List<StudentInfo> allStudents = classroomService.getMyClassroomStudents(teacherEmail);
+            List<StudentInfoDto> allStudents = classroomService.getMyClassroomStudents(teacherEmail);
 
             return ResponseEntity.status(HttpStatus.OK).body(allStudents);
         } catch (Exception e) {
@@ -312,6 +311,7 @@ private ClassroomService classroomService;
 
 
 
+    @Transactional
     @PostMapping("/webhook")
     public ResponseEntity<?> webHook(@RequestBody Map<String, Object> payload) {
         try {
@@ -348,8 +348,56 @@ private ClassroomService classroomService;
                 // customer info
                 Map<String, Object> customer = (Map<String, Object>) data.get("customer");
                 String email = (String) customer.get("email");
+                System.out.println(email);
                 User student = userRepository.findByEmail(email);
                 User classroomOwner = userRepository.findById(classroomOwnerId).orElse(null);
+
+                Optional<StudentInfo> studentInfoOpt = studentRepository.findFirstByEmail(student.getEmail());
+                System.out.println("Looking for studentInfo with email: " + student.getEmail());
+                System.out.println("Found studentInfo? " + studentInfoOpt.isPresent());
+
+                if (studentInfoOpt.isPresent()) {
+                    StudentInfo studentInfo = studentInfoOpt.get();
+                    System.out.println("StudentInfo loaded: " + studentInfo.getFirstName() + " " + studentInfo.getLastName());
+
+                    if (!studentInfo.getClassrooms().contains(classroom)) {
+                        System.out.println("Student not yet in classroom " + classroom.getClassName() + ". Adding now...");
+
+                        // ✅ Update owning side
+                        studentInfo.getClassrooms().add(classroom);
+
+                        // optional (sync in memory)
+                        classroom.getStudents().add(studentInfo);
+
+                        studentRepository.save(studentInfo); // only owning side must be saved
+                        System.out.println("Student added to classroom and saved ✅");
+                    } else {
+                        System.out.println("Student already in classroom " + classroom.getClassName());
+                    }
+
+                } else {
+                    System.out.println("No StudentInfo found. Creating new StudentInfo for " + student.getEmail());
+
+                    StudentInfo newStudentInfo = new StudentInfo();
+                    newStudentInfo.setEmail(student.getEmail());
+                    newStudentInfo.setFirstName(student.getFirstName());
+                    newStudentInfo.setLastName(student.getLastName());
+                    newStudentInfo.setUser(student);
+
+                    // ✅ Add classroom (owning side)
+                    newStudentInfo.getClassrooms().add(classroom);
+
+                    studentRepository.save(newStudentInfo);
+                    System.out.println("New studentInfo created and saved with classroom ✅");
+                }
+
+// Debug check: list all students in this classroom
+                Classroom debugClassroom = classRepository.findById(classroom.getClassId()).orElseThrow();
+                System.out.println("Current students in classroom " + debugClassroom.getClassName() + ":");
+                debugClassroom.getStudents().forEach(s ->
+                        System.out.println(" -> " + s.getEmail() + " (" + s.getFirstName() + " " + s.getLastName() + ")")
+                );
+
 
                 // check if order already exists
                 if (orderRepository.findByReference(reference) == null) {
@@ -402,9 +450,9 @@ private ClassroomService classroomService;
                     assert classroomOwner != null;
                     String destination = "/topic/classroom." + classroomOwner.getUserId();
 
-                    NotificationDTO notificationDTO = new NotificationDTO(
+                    NotificationDTO notificationDTO = new NotificationDTO(notification.getId(),
                             notification.getTimestamp(), notification.getContent(), notification.getType(),
-                            notification.getTeacher().getUserId(), notification.getClassroom().getClassName()
+                            notification.getTeacher().getUserId(), notification.getClassroom().getClassName(), notification.getRead()
 
                     );
                     simpMessagingTemplate.convertAndSend(destination, notificationDTO);

@@ -13,6 +13,17 @@ public class StudentInfoDto {
     private Double attendanceRate;
     private String status;        // active | inactive | pending
     private Double progress;
+    public StudentInfoDto(Long studentId, String firstName, String lastName, String email) {
+        this.studentId = studentId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        updateFullName(); // keep fullName updated
+    }
+
+    public StudentInfoDto() {
+
+    }
 
     // === Getters & Setters ===
     public Long getStudentId() {

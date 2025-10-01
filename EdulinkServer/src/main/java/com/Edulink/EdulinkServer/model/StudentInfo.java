@@ -11,11 +11,11 @@ import java.util.List;
 @Table(name = "studentInfos")
 public class StudentInfo {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long studentId;
 
     @OneToOne
-    @MapsId
-    @JoinColumn(name = "student_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     public User getUser() {
