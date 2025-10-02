@@ -7,6 +7,7 @@ import com.Edulink.EdulinkServer.dto.user.UserResponseDTO;
 import com.Edulink.EdulinkServer.mapper.UserMapper;
 import com.Edulink.EdulinkServer.model.User;
 import com.Edulink.EdulinkServer.payload.ApiResponse;
+import com.Edulink.EdulinkServer.service.BlacklistedTokenService;
 import com.Edulink.EdulinkServer.service.EmailService;
 import com.Edulink.EdulinkServer.service.JwtService;
 import com.Edulink.EdulinkServer.service.MyUserDetailService;
@@ -49,6 +50,8 @@ public class AuthController {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private BlacklistedTokenService blacklistedTokenService;
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
 
@@ -191,5 +194,26 @@ public class AuthController {
         }
     }
 
+    // Logout
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader ("Authorization") String authHeader){
+        try {
+            if(authHeader != null && authHeader.startsWith("Bearer ")){
+                String token = authHeader.substring(7);
+
+                LocalDateTime expiry = jwtService.extractExpiration(token).toInstant()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDateTime();
+
+                blacklistedTokenService.blacklistToken(token, expiry);
+
+            }
+            return ResponseEntity.status(HttpStatus.OK).body("Logged Out Successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+
+    }
 
 }

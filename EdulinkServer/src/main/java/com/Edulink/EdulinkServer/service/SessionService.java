@@ -121,7 +121,7 @@ public class SessionService {
         List<StudentInfo> students = studentRepository.findByEmail(email);
 
         if (students == null || students.isEmpty()) {
-            throw new RuntimeException(email + " is not found in the list of this session");
+            throw new RuntimeException("You can only have sessions when you join a class");
         }
 
         // Collect all classrooms from all students with this email
@@ -139,6 +139,8 @@ public class SessionService {
                 .flatMap(classroom -> sessionRepository.findDTOByClassroom(classroom).stream())
                 .toList();
     }
+
+
 
     public void endSession() {
 

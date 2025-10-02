@@ -1,5 +1,6 @@
 package com.Edulink.EdulinkServer.config;
 
+import com.Edulink.EdulinkServer.service.BlacklistedTokenService;
 import com.Edulink.EdulinkServer.service.MyUserDetailService;
 import com.Edulink.EdulinkServer.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -24,6 +25,9 @@ public class JwtFilter extends OncePerRequestFilter {
     private ApplicationContext applicationContext;
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private BlacklistedTokenService blacklistedTokenService;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
@@ -32,6 +36,13 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if(authHeader != null && authHeader.startsWith("Bearer ")){
             token = authHeader.substring(7);
+
+            if(blacklistedTokenService.isTokenBlacklisted(token)){
+                System.out.println("Blocked blacklisted token: " + token);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             try {
                 email = jwtService.extractUserName(token);
             } catch (Exception e) {
