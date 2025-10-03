@@ -4,6 +4,7 @@ import com.Edulink.EdulinkServer.dto.SessionDTO;
 import com.Edulink.EdulinkServer.dto.StudentInfoDto;
 import com.Edulink.EdulinkServer.model.Session;
 import com.Edulink.EdulinkServer.model.StudentInfo;
+import com.Edulink.EdulinkServer.model.User;
 import com.Edulink.EdulinkServer.model.embeddables.ClassMaterial;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.ManyToMany;
@@ -31,6 +32,15 @@ public class ClassroomResponseDto {
     private List<ClassMaterial> tasks;
 
 
+    private String classroomOwnerFirstName;
+
+    public String getClassroomOwnerFirstName() {
+        return classroomOwnerFirstName;
+    }
+
+    public void setClassroomOwnerFirstName(String classroomOwnerFirstName) {
+        this.classroomOwnerFirstName = classroomOwnerFirstName;
+    }
 
     private List<StudentInfoDto> students ;
 

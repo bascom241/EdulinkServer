@@ -15,10 +15,11 @@ import com.Edulink.EdulinkServer.repository.StudentRepository;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -51,6 +52,7 @@ public class ClassroomService {
 
     @Autowired
     private StudentRepository studentRepository;
+
 
 
     // Create a Classroom
@@ -409,6 +411,7 @@ public class ClassroomService {
     }
 
 
+    // Todo For student end points
 
     // Not sure if it will be Implemented
     public Classroom enrollStudentToClassroom(StudentInfo studentInfo, Long classroomId){
@@ -422,6 +425,16 @@ public class ClassroomService {
         return classRepository.save(classroom);
 
     }
+
+    public Page<ClassroomResponseDto> getAllClassrooms (int page , int size , String sortBy , String direction){
+        Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
+        Pageable pageable = PageRequest.of(page, size , sort);
+
+        Page <Classroom> classrooms= classRepository.findAll(pageable);
+
+        return classrooms.map(ClassroomMapper::toDto);
+    }
+
 
 }
 

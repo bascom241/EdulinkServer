@@ -149,7 +149,7 @@ public class Classroom {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore
+
     private User owner;
 
     public User getOwner() {

@@ -70,7 +70,7 @@ public class ClassroomMapper {
         dto.setNumberOfStudents(classroom.getStudents().size());
         dto.setNumberOfSessions(classroom.getSessions().size());
         dto.setNumberOfQuestions(classroom.getQuestions().size());
-
+        dto.setClassroomOwnerFirstName(classroom.getOwner() != null?  classroom.getOwner().getFirstName() :  "");
         return dto;
     }
 }

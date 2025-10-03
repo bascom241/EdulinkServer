@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -240,6 +241,26 @@ private ClassroomService classroomService;
             return ResponseEntity.status(HttpStatus.OK).body(studentAnswer);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+
+
+    // Todo for student api
+
+
+    @GetMapping("/get-all-classrooms")
+    public Page<ClassroomResponseDto> getAllClassrooms (
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "classId") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+
+    ){
+        try {
+            return classroomService.getAllClassrooms(page, size, sortBy, direction);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
