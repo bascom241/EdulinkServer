@@ -33,6 +33,24 @@ public class ClassroomResponseDto {
 
 
     private String classroomOwnerFirstName;
+    private Long instructorId;
+    private String classroomOwnerEmail;
+
+    public String getClassroomOwnerEmail() {
+        return classroomOwnerEmail;
+    }
+
+    public void setClassroomOwnerEmail(String classroomOwnerEmail) {
+        this.classroomOwnerEmail = classroomOwnerEmail;
+    }
+
+    public Long getInstructorId() {
+        return instructorId;
+    }
+
+    public void setInstructorId(Long instructorId) {
+        this.instructorId = instructorId;
+    }
 
     public String getClassroomOwnerFirstName() {
         return classroomOwnerFirstName;

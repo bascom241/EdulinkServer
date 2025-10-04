@@ -275,6 +275,8 @@ public class ClassroomService {
         if(question.getQuestionType() == null){
             throw new RuntimeException("Question Type is Required");
         }
+
+
         question.setClassroom(classroom);
 
         classroom.getQuestions().add(question);

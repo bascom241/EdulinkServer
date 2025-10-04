@@ -43,13 +43,13 @@ public class PayStackService {
 
         User owner = userRepository.findById(ownerId).orElseThrow(() -> new RuntimeException("Classroom Owner Not Found"));
 
-
+        System.out.println(amount);
 
 
         Map<String, Object> body = new HashMap<>();
 
         body.put("email", studentInfo.getEmail());
-        body.put("amount", amount);
+        body.put("amount", amount * 100);
         body.put("callback_url" , "http://localhost:5173/initialize/success");
         body.put("first_name", studentInfo.getFirstName());
         body.put("last_name", studentInfo.getLastName());

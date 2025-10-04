@@ -71,6 +71,8 @@ public class ClassroomMapper {
         dto.setNumberOfSessions(classroom.getSessions().size());
         dto.setNumberOfQuestions(classroom.getQuestions().size());
         dto.setClassroomOwnerFirstName(classroom.getOwner() != null?  classroom.getOwner().getFirstName() :  "");
+        dto.setClassroomOwnerEmail(classroom.getOwner() != null ? classroom.getOwner().getEmail() : "");
+        dto.setInstructorId(classroom.getOwner() != null ? classroom.getOwner().getUserId() : 0);
         return dto;
     }
 }
