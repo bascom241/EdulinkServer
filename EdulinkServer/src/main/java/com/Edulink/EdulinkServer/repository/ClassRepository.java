@@ -20,4 +20,8 @@ public interface ClassRepository extends JpaRepository<Classroom , Long> {
     List<Classroom> findByOwner_Email(String email);
 
 
+    @Query("SELECT c FROM Classroom c JOIN c.students s WHERE s.email = :email")
+    List<Classroom> findAllByStudentEmail(@Param("email") String email);
+
+
 }

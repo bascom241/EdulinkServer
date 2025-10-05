@@ -276,12 +276,24 @@ private ClassroomService classroomService;
             }
 
 
-            boolean isStudentExists = classroom.getStudents().stream()
-                    .anyMatch(s -> s.getStudentId().equals(student.getUserId()));
-            if (isStudentExists) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Already Enrolled in this classroom");
+            if (classroom.getStudents() != null) {
+                classroom.getStudents().forEach(s -> {
+                    System.out.println("Student in class: " + s.getEmail());
+                });
             }
+            System.out.println("Incoming student ID: " + student.getEmail());
+
+            boolean isStudentExists = classroom.getStudents() != null &&
+                    classroom.getStudents().stream()
+                            .anyMatch(s -> s.getEmail().equals(student.getEmail()));
+
+            System.out.println(isStudentExists);
+            if (isStudentExists) {
+                return ResponseEntity.badRequest().body("Already Enrolled in this classroom");
+            }
+
+            classroomService.verifyIfStudentExitsInClassroomAndStudentInfo(classroomId, studentInfo.getEmail());
+
 
             boolean eligible = classroomService.verifyJoinRequest(studentInfo, classroomId, teacherEmail);
             if (!eligible) {
@@ -299,6 +311,16 @@ private ClassroomService classroomService;
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @GetMapping("/student")
+    public ResponseEntity<?> getStudentClassrooms(@RequestParam(name = "email") String email) {
+        try {
+            List<ClassroomResponseDto> classrooms = classroomService.getClassroomsByStudentEmail(email);
+            return ResponseEntity.ok(classrooms);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
@@ -376,49 +398,6 @@ private ClassroomService classroomService;
                 Optional<StudentInfo> studentInfoOpt = studentRepository.findFirstByEmail(student.getEmail());
                 System.out.println("Looking for studentInfo with email: " + student.getEmail());
                 System.out.println("Found studentInfo? " + studentInfoOpt.isPresent());
-
-                if (studentInfoOpt.isPresent()) {
-                    StudentInfo studentInfo = studentInfoOpt.get();
-                    System.out.println("StudentInfo loaded: " + studentInfo.getFirstName() + " " + studentInfo.getLastName());
-
-                    if (!studentInfo.getClassrooms().contains(classroom)) {
-                        System.out.println("Student not yet in classroom " + classroom.getClassName() + ". Adding now...");
-
-                        // ✅ Update owning side
-                        studentInfo.getClassrooms().add(classroom);
-
-                        // optional (sync in memory)
-                        classroom.getStudents().add(studentInfo);
-
-                        studentRepository.save(studentInfo); // only owning side must be saved
-                        System.out.println("Student added to classroom and saved ✅");
-                    } else {
-                        System.out.println("Student already in classroom " + classroom.getClassName());
-                    }
-
-                } else {
-                    System.out.println("No StudentInfo found. Creating new StudentInfo for " + student.getEmail());
-
-                    StudentInfo newStudentInfo = new StudentInfo();
-                    newStudentInfo.setEmail(student.getEmail());
-                    newStudentInfo.setFirstName(student.getFirstName());
-                    newStudentInfo.setLastName(student.getLastName());
-                    newStudentInfo.setUser(student);
-
-                    // ✅ Add classroom (owning side)
-                    newStudentInfo.getClassrooms().add(classroom);
-
-                    studentRepository.save(newStudentInfo);
-                    System.out.println("New studentInfo created and saved with classroom ✅");
-                }
-
-// Debug check: list all students in this classroom
-                Classroom debugClassroom = classRepository.findById(classroom.getClassId()).orElseThrow();
-                System.out.println("Current students in classroom " + debugClassroom.getClassName() + ":");
-                debugClassroom.getStudents().forEach(s ->
-                        System.out.println(" -> " + s.getEmail() + " (" + s.getFirstName() + " " + s.getLastName() + ")")
-                );
-
 
                 // check if order already exists
                 if (orderRepository.findByReference(reference) == null) {

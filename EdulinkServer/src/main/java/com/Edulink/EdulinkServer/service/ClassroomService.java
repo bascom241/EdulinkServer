@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ClassroomService {
@@ -330,11 +331,60 @@ public class ClassroomService {
 
     }
 
+    public void verifyIfStudentExitsInClassroomAndStudentInfo( Long classroomId, String studentEmail){
+        User student = userRepository.findByEmail(studentEmail);
+        Optional<StudentInfo> studentInfoOpt = studentRepository.findFirstByEmail(student.getEmail());
+        Classroom classroom = classRepository.findById(classroomId).orElseThrow(()-> new RuntimeException("Classroom Not Found"));
+
+        if (studentInfoOpt.isPresent()) {
+            StudentInfo studentInfo = studentInfoOpt.get();
+            System.out.println("StudentInfo loaded: " + studentInfo.getFirstName() + " " + studentInfo.getLastName());
+
+            if (!studentInfo.getClassrooms().contains(classroom)) {
+                System.out.println("Student not yet in classroom " + classroom.getClassName() + ". Adding now...");
+
+                // ✅ Update owning side
+                studentInfo.getClassrooms().add(classroom);
+
+                // optional (sync in memory)
+                classroom.getStudents().add(studentInfo);
+
+                studentRepository.save(studentInfo); // only owning side must be saved
+                System.out.println("Student added to classroom and saved ✅");
+            } else {
+                System.out.println("Student already in classroom " + classroom.getClassName());
+            }
+
+        } else {
+            System.out.println("No StudentInfo found. Creating new StudentInfo for " + student.getEmail());
+
+            StudentInfo newStudentInfo = new StudentInfo();
+            newStudentInfo.setEmail(student.getEmail());
+            newStudentInfo.setFirstName(student.getFirstName());
+            newStudentInfo.setLastName(student.getLastName());
+            newStudentInfo.setUser(student);
+
+            // ✅ Add classroom (owning side)
+            newStudentInfo.getClassrooms().add(classroom);
+
+            studentRepository.save(newStudentInfo);
+            System.out.println("New studentInfo created and saved with classroom ✅");
+        }
+
+    }
+
 
     // Fetching all Classrooms Created by instructors  (Todo)
     // Fetching all Classrooms Created by instructors and returning Length
     // Fetching all Classrooms Filterd by full or not ...
 
+
+    public List<ClassroomResponseDto> getClassroomsByStudentEmail(String email) {
+        List<Classroom> classrooms = classRepository.findAllByStudentEmail(email);
+        return classrooms.stream()
+                .map(ClassroomMapper::toDto)
+                .collect(Collectors.toList());
+    }
 
     public long getInstructorClassroomCount(String email){
         User instructor = userRepository.findByEmail(email);
