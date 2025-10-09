@@ -2,6 +2,7 @@ package com.Edulink.EdulinkServer.config;
 
 import com.Edulink.EdulinkServer.service.MyUserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,6 +32,12 @@ public class SecurityConfig {
 
     @Autowired
     private JwtFilter jwtFilter;
+
+    @Value("${deployed.url}")
+    private String deployedUrl;
+
+    @Value("${localhost.url}")
+    private String localhostUrl;
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -79,7 +86,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // React frontend
+        configuration.setAllowedOrigins(Arrays.asList(localhostUrl, deployedUrl)); // React frontend
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
